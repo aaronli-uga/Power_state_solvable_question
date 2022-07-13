@@ -48,5 +48,5 @@ for i in 1:ntest
   end
   iter_count = iter_count + 1
 end
-CSV.write("mod_ratio_new.csv",DataFrame(mod_ratio),writeheader=false)
-CSV.write("iffeas_new.csv",DataFrame(iffeas),writeheader=false)
+CSV.write("mod_ratio_new.csv",DataFrame(mod_ratio, :auto),writeheader=false)
+CSV.write("iffeas_new.csv",DataFrame(iffeas, :auto),writeheader=false)

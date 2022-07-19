@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-18 00:02:08
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 01:17:05
+LastEditTime: 2022-07-19 09:46:05
 Description: 
 '''
 from turtle import forward
@@ -31,3 +31,6 @@ class FNN(nn.Module):
         output = self.relu(self.fc4(output))
         output = self.sigmoid(self.fc5(output))
         return output
+
+
+        

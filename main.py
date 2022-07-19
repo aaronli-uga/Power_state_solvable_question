@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 22:39:08
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-14 00:11:23
+LastEditTime: 2022-07-19 00:50:16
 Description: 
 '''
 #%% Loading data from csv
@@ -16,9 +16,10 @@ from utils import classify_sub
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, LinearSVC
 from sklearn.ensemble import RandomForestClassifier
+from collections import Counter
 
-X_csv = "mod_ratio.csv"
-y_csv = "iffeas.csv"
+X_csv = "mod_ratio_10k.csv"
+y_csv = "iffeas_10k.csv"
 
 df = pd.read_csv(X_csv)
 X = df.to_numpy()
@@ -34,11 +35,28 @@ train_std = X_train.std(axis=0)
 X_train = (X_train - train_mean) / train_std
 X_test = (X_test - train_mean) / train_std
 
+# print chart plot
+cnt = Counter(y)
+data = {'Solvable':cnt[0], 'Non-Solvable':cnt[1]}
+data_type = list(data.keys())
+data_numbers = list(data.values())
+
+fig = plt.figure(figsize = (10, 5))
+ 
+# creating the bar plot
+plt.bar(data_type, data_numbers, color ='blue',
+        width = 0.4)
+ 
+plt.xlabel("data types ")
+plt.ylabel("No. of samples")
+plt.title("data distribution")
+plt.show()
+
 #%%
-# fig, ax = plt.subplots(figsize=(8,6))
-# ax.scatter(X_train[:,0], X_train[:,1], c=y_train.flatten())
-# ax.grid(True)
-# plt.show()
+fig, ax = plt.subplots(figsize=(8,6))
+ax.scatter(X_train[:,0], X_train[:,1], c=y_train.flatten())
+ax.grid(True)
+plt.show()
 
 
 # %% Machine learning training

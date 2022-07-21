@@ -1,8 +1,8 @@
 '''
 Author: Qi7
 Date: 2022-07-19 08:31:52
-LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 09:55:48
+LastEditors: error: git config user.name && git config user.email & please set dead value or install git
+LastEditTime: 2022-07-21 19:37:04
 Description: 
 '''
 from numpy import dtype
@@ -33,10 +33,10 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_p
     train_loss_sum = 0
     total = 0
     data_size = len(trainLoader.dataset)
-    for batch, (data_batch, labels) in tqdm(enumerate(trainLoader)):
+    for batch, (data_batch, labels) in enumerate(trainLoader):
         # data_batch = data_batch.view(data_batch.shape[0], 1, data_batch.shape[1])
         data_batch = data_batch.to(device, dtype=torch.float)
-        labels = labels.view(labels.shape[0], 1)
+        # labels = labels.view(labels.shape[0], 1)
         labels = labels.to(device, dtype=torch.float)
         pred = model(data_batch)
         loss = loss_fn(pred, labels)
@@ -66,7 +66,8 @@ def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history):
 
     with torch.no_grad():
         for X, y in dataloader:
-            # X = X.view(X.shape[0], 1, X.shape[1])
+            # # X = X.view(X.shape[0], 1, X.shape[1])
+            # y = y.view(y.shape[0], 1)
             X, y = X.to(device, dtype=torch.float), y.to(device, dtype=torch.float)
             pred = model(X)
             loss += loss_fn(pred, y)

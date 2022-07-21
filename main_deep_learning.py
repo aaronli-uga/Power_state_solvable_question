@@ -1,8 +1,8 @@
 '''
 Author: Qi7
 Date: 2022-07-19 00:26:02
-LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 09:56:20
+LastEditors: error: git config user.name && git config user.email & please set dead value or install git
+LastEditTime: 2022-07-21 19:36:09
 Description: 
 '''
 import os
@@ -27,10 +27,10 @@ df = pd.read_csv(X_csv)
 X = df.to_numpy()
 df = pd.read_csv(y_csv)
 y = df.to_numpy()
-y = y.flatten()
+# y = y.flatten()
 
 #%% preprocessing
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=77)
 
 train_mean = X_train.mean(axis=0)
 train_std = X_train.std(axis=0)
@@ -38,7 +38,7 @@ X_train = (X_train - train_mean) / train_std
 X_test = (X_test - train_mean) / train_std
 
 
-bs = 100 #batch size
+bs = 200 #batch size
 training_data = MyLoader(data_root=X_train, data_label=y_train)
 testing_data = MyLoader(data_root=X_test, data_label=y_test)
 
@@ -49,8 +49,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = FNN(n_inputs=X_train.shape[1])
 model.to(device)
 
-epochs = 200
-Lr = 0.01 
+epochs = 100
+Lr = 0.001 
 loss_fn = torch.nn.BCELoss()
 metric_fn = get_accuracy
 
@@ -78,9 +78,9 @@ for t in range(epochs):
         history=history
     )
 
-plt.figure(figsize=(10,8))
-plt.plot(history['val'])
-plt.show()
-plt.figure(figsize=(10,8))
-plt.plot(history['f1_train'])
-plt.show()
+# plt.figure(figsize=(10,8))
+# plt.plot(history['val'])
+# plt.show()
+# plt.figure(figsize=(10,8))
+# plt.plot(history['f1_train'])
+# plt.show()

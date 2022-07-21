@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 22:39:08
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 00:50:16
+LastEditTime: 2022-07-19 13:47:38
 Description: 
 '''
 #%% Loading data from csv
@@ -37,7 +37,7 @@ X_test = (X_test - train_mean) / train_std
 
 # print chart plot
 cnt = Counter(y)
-data = {'Solvable':cnt[0], 'Non-Solvable':cnt[1]}
+data = {'Non-Solvable':cnt[0], 'Solvable':cnt[1]}
 data_type = list(data.keys())
 data_numbers = list(data.values())
 

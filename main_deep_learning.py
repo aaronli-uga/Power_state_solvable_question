@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 09:23:25
+LastEditTime: 2022-07-19 09:56:20
 Description: 
 '''
 import os
@@ -50,7 +50,7 @@ model = FNN(n_inputs=X_train.shape[1])
 model.to(device)
 
 epochs = 200
-Lr = 0.002 
+Lr = 0.01 
 loss_fn = torch.nn.BCELoss()
 metric_fn = get_accuracy
 

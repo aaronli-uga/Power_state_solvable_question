@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 09:46:01
+LastEditTime: 2022-07-19 09:55:48
 Description: 
 '''
 from numpy import dtype
@@ -20,14 +20,14 @@ def get_accuracy(pred, label):
 def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_pretrained = False):
     num_batches = len(trainLoader)
     if is_pretrained == False:
-        optimizer = torch.optim.SGD(model.parameters(), lr=LR)
+        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     else:
         # frozen the layer no need to train
         # for weights in model.encoder.parameters():
         #     weights.requires_grad = False
         
         params = filter(lambda p: p.requires_grad, model.parameters())
-        optimizer = torch.optim.SGD(params, lr=LR)
+        optimizer = torch.optim.Adam(params, lr=LR)
     
     model.train()
     train_loss_sum = 0

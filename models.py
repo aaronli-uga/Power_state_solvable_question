@@ -1,8 +1,8 @@
 '''
 Author: Qi7
 Date: 2022-07-18 00:02:08
-LastEditors: error: git config user.name && git config user.email & please set dead value or install git
-LastEditTime: 2022-07-21 19:26:31
+LastEditors: aaronli-uga ql61608@uga.edu
+LastEditTime: 2022-07-21 20:59:54
 Description: 
 '''
 from turtle import forward
@@ -35,4 +35,23 @@ class FNN(nn.Module):
         return x
 
 
+class new_FNN(nn.Module):
+
+    def __init__(self, n_inputs):
+        super(new_FNN, self).__init__()
+        self.fc1 = nn.Linear(n_inputs, 32)
+        self.fc2 = nn.Linear(32, 64)
+        self.fc3 = nn.Linear(64, 32)
+        self.fc4 = nn.Linear(32, 1)
         
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+        self.dout = nn.Dropout(0.2)
+    
+    def forward(self, input):
+        x = self.relu(self.fc1(input))
+        x = self.relu(self.fc2(x))
+        x = self.relu(self.fc3(x))
+        x = self.dout(x)
+        x = self.sigmoid(self.fc4(x))
+        return x

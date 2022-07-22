@@ -2,14 +2,14 @@
 Author: Qi7
 Date: 2022-07-19 08:23:59
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 08:30:25
+LastEditTime: 2022-07-21 20:49:40
 Description: 
 '''
 import os
 import torch
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder # The LabelEncoder turns catergorial features into numerical features.
 
 class MyLoader(torch.utils.data.Dataset):
     def __init__(self, data_root, data_label):

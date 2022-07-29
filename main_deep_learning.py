@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-29 01:54:26
+LastEditTime: 2022-07-29 09:57:01
 Description: 
 '''
 #%%
@@ -23,11 +23,15 @@ from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, aver
 from matplotlib import pyplot as plt
 from training import train_loop, eval_loop
 from torch.optim import lr_scheduler
-from utils import heatmap
+from utils import heatmap, heatmap3D
 
 
-X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
-y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
+# X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
+# y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
+# X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
+# y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d_v2.csv"
+X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
+y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
 
 df = pd.read_csv(X_csv)
 X = df.to_numpy()
@@ -54,12 +58,13 @@ testing_data = MyLoader(data_root=X_test, data_label=y_test)
 all_dataloader = DataLoader(all_data, batch_size = 1, shuffle = False)
 train_dataloader = DataLoader(training_data, batch_size = 64, shuffle = True)
 test_dataloader = DataLoader(testing_data, batch_size = 1024, shuffle = False)
+draw_test_dataloader = DataLoader(testing_data, batch_size = 1, shuffle = False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = FNN(n_inputs=X_train.shape[1])
 model.to(device)
 
-epochs = 100
+epochs = 10
 Lr = 0.01
 loss_fn = torch.nn.BCELoss()
 metric_fn = f1_score
@@ -90,7 +95,9 @@ for t in range(epochs):
         history=history
     )
 
-    heatmap(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
+    # heatmap(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
+# heatmap3D(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
+heatmap3D(model=model, dataset=X_test, dataloader=draw_test_dataloader, device=device)
 
 
 

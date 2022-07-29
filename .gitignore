@@ -1,4 +1,6 @@
-*.csv
 *.png
 *.pyc
 *.pth
+*.DS_Store
+Summary/
+Confusion_Matrix/

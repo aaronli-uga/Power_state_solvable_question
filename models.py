@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-18 00:02:08
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-21 20:59:54
+LastEditTime: 2022-07-28 09:38:29
 Description: 
 '''
 from turtle import forward

@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-22 02:24:06
+LastEditTime: 2022-07-29 01:54:26
 Description: 
 '''
 #%%
@@ -23,10 +23,11 @@ from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, aver
 from matplotlib import pyplot as plt
 from training import train_loop, eval_loop
 from torch.optim import lr_scheduler
+from utils import heatmap
 
 
-X_csv = "mod_ratio_10k.csv"
-y_csv = "iffeas_10k.csv"
+X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
+y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
 
 df = pd.read_csv(X_csv)
 X = df.to_numpy()
@@ -36,15 +37,21 @@ y = df.to_numpy()
 #%% preprocessing
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=23)
 
+all_data_mean = X.mean(axis=0)
+all_data_std = X.std(axis=0)
+
 train_mean = X_train.mean(axis=0)
 train_std = X_train.std(axis=0)
+
+X_all = (X - all_data_mean) / all_data_std
 X_train = (X_train - train_mean) / train_std
 X_test = (X_test - train_mean) / train_std
 
-
+all_data = MyLoader(data_root=X_all, data_label=y)
 training_data = MyLoader(data_root=X_train, data_label=y_train)
 testing_data = MyLoader(data_root=X_test, data_label=y_test)
 
+all_dataloader = DataLoader(all_data, batch_size = 1, shuffle = False)
 train_dataloader = DataLoader(training_data, batch_size = 64, shuffle = True)
 test_dataloader = DataLoader(testing_data, batch_size = 1024, shuffle = False)
 
@@ -82,6 +89,12 @@ for t in range(epochs):
         device=device,
         history=history
     )
+
+    heatmap(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
+
+
+
+
 
 time_delta = time.time() - start
 print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))

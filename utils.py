@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-29 09:58:46
+LastEditTime: 2022-08-01 10:56:41
 Description: 
 '''
 import pandas as pd
@@ -11,6 +11,31 @@ import torch
 import matplotlib.colors
 from sklearn.metrics import classification_report
 from matplotlib import pyplot as plt
+
+
+
+
+class UncertaintySampling():
+    """Active Learning methods to sample for uncertainty for the solvability problem.
+    
+    """
+
+    def __init__(self, verbose=False):
+        self.verbose = verbose
+    
+    def least_confidence(self, prob):
+        """
+        prob: the probability output of the neural network
+        """
+        if prob > 0.5:
+            simple_least_conf = prob
+        else:
+            simple_least_conf = 1 - prob
+        
+        #binary classification
+        num_labels = 2
+        normalized_least_conf = (1 - simple_least_conf) * (num_labels / (num_labels - 1))
+        return normalized_least_conf
 
 
 

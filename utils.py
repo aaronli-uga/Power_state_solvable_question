@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-01 10:56:41
+LastEditTime: 2022-08-02 16:05:24
 Description: 
 '''
 import pandas as pd
@@ -36,6 +36,28 @@ class UncertaintySampling():
         num_labels = 2
         normalized_least_conf = (1 - simple_least_conf) * (num_labels / (num_labels - 1))
         return normalized_least_conf
+    
+    def margin_confidence(self, prob):
+        """ 
+        Returns the uncertainty score of a probability distribution using
+        margin of confidence sampling in a 0-1 range where 1 is the most uncertain
+        """
+        if prob > 0.5:
+            return (1 - prob) / prob
+        else:
+            return prob / (1-prob)
+    
+    def entropy_based(self, prob):
+        """
+        Returns the uncertainty score of a probability distribution using
+        entropy.
+        """
+        prob_dist = [prob, 1 - prob]
+        log_probs = prob_dist * np.log2(prob_dist)
+        raw_entropy = 0 - np.sum(log_probs)
+        normalized_entropy = raw_entropy / np.log2(len(prob_dist))
+
+        return normalized_entropy
 
 
 

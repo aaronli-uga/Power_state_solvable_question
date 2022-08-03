@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-03 11:35:52
+LastEditTime: 2022-08-03 17:20:55
 Description: 
 '''
 #%%
@@ -24,7 +24,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, aver
 from matplotlib import pyplot as plt
 from training import train_loop, eval_loop
 from torch.optim import lr_scheduler
-from utils import heatmap, heatmap3D
+from utils import heatmap, heatmap3D, UncertaintySampling, dataSampling
 
 # Ignore the warning information
 warnings.filterwarnings('always')
@@ -37,6 +37,9 @@ def main(verbose=False, method=0):
     if method == 2:
         if verbose: print("configure the physical information for active learning")
         pass
+
+    sampler = UncertaintySampling()
+    sample_method = sampler.least_confidence
     # IEEE 39 bus
     # X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
     # y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
@@ -100,7 +103,7 @@ def main(verbose=False, method=0):
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 50
+    epochs = 10
     Lr = 0.01
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
@@ -119,13 +122,21 @@ def main(verbose=False, method=0):
             train_data_pool = np.delete(train_data_pool, obj=slice(0, num_init_samples), axis=0)
         else:
             if verbose: print(f"The sampling round, {num_samples_per_epoch} numbers of sample have been randomly sampled")
+
+            # if randomly sample
             if method == 0:
                 np.random.shuffle(train_data_pool)
                 cur_training_data = train_data_pool[0:num_samples_per_epoch, :]
                 sampled_data_pool = np.append(sampled_data_pool, cur_training_data, axis=0)
                 train_data_pool = np.delete(train_data_pool, obj=slice(0, num_samples_per_epoch), axis=0)
+            # if active learning sample
             elif method == 1:
-                pass
+                print("test")
+                train_data_pool = dataSampling(model=model, uncertainty_methods=sample_method, data_pool=train_data_pool, device=device)
+                cur_training_data = train_data_pool[0:num_samples_per_epoch, :]
+                sampled_data_pool = np.append(sampled_data_pool, cur_training_data, axis=0)
+                train_data_pool = np.delete(train_data_pool, obj=slice(0, num_samples_per_epoch), axis=0)
+            # if active learning sample with physical information
             elif method == 2:
                 pass
             else:
@@ -157,7 +168,7 @@ def main(verbose=False, method=0):
             verbose=verbose
         )
 
-        # heatmap(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
+        heatmap(model=model, dataset=X_all, device=device, uncertainty_methods=sample_method, epoch=t+1)
     # heatmap3D(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
     # heatmap3D(model=model, dataset=X_test, dataloader=draw_test_dataloader, device=device)
 
@@ -195,4 +206,4 @@ def main(verbose=False, method=0):
 
 
 if __name__ == '__main__':
-    main(verbose=True, method=0)
+    main(verbose=True, method=1)

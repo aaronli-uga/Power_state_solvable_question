@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-02 16:05:24
+LastEditTime: 2022-08-03 17:20:53
 Description: 
 '''
 import pandas as pd
@@ -87,26 +87,30 @@ def predict(row, model):
     return yhat
 
 
-def heatmap(model, dataset, dataloader, device):
+def heatmap(model, dataset, device, uncertainty_methods, epoch):
     preds = []
     model.eval()
 
     with torch.no_grad():
-        for X, _ in dataloader:
-            X = X.to(device, dtype=torch.float)
-            pred = model(X)
-            pred = pred.cpu().numpy().item()
-            preds.append(pred)
+        X = torch.from_numpy(dataset)
+        X = X.to(device, dtype=torch.float)
+        preds = model(X)
+        preds = preds.detach().cpu().numpy()
+    
+    preds = preds.flatten()
+    for i in range(len(preds)):
+        preds[i] = uncertainty_methods(preds[i])        
     
     feature_1 = dataset[:,0]
     feature_2 = dataset[:,1]
     # draw the heatmap 
     plt.figure()
+    plt.title(f"uncertainty heatmap (Epoch: {epoch})")
     plt.scatter(feature_1, feature_2, c=preds, cmap="coolwarm")
     plt.colorbar()
     plt.show()
 
-def heatmap3D(model, dataset, dataloader, device):
+def heatmap3D(model, dataset, device):
     preds = []
     model.eval()
     num_of_nodes = 400
@@ -141,3 +145,22 @@ def heatmap3D(model, dataset, dataloader, device):
     # plt.scatter(feature_1, feature_2, feature_3, c=preds, cmap="coolwarm")
     # plt.colorbar()
     plt.show()
+
+def dataSampling(model, uncertainty_methods, data_pool, device):
+    model.eval()
+    with torch.no_grad():
+        X = data_pool[:, :-1]
+        X = torch.from_numpy(X)
+        X = X.to(device, dtype=torch.float)
+        preds = model(X)
+        preds = preds.detach().cpu().numpy()
+
+    preds = preds.flatten()
+    for i in range(len(preds)):
+        preds[i] = uncertainty_methods(preds[i])
+    
+    # sort the index based on the uncertainty
+    sorted_index = sorted(range(len(preds)), key=lambda k: preds[k])
+
+    # from high to low
+    return data_pool[sorted_index[::-1]]

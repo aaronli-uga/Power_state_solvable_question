@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-22 01:54:26
+LastEditTime: 2022-08-02 22:49:32
 Description: 
 '''
 from curses import mousemask
@@ -14,7 +14,7 @@ from tqdm import tqdm
 from sklearn.metrics import confusion_matrix, recall_score, f1_score
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, average_precision_score
 
-def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save_path = 'solvable_best_model.pth', is_pretrained = False, momentum=0.9):
+def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save_path = 'solvable_best_model.pth', is_pretrained = False, momentum=0.9, verbose=False):
     num_batches = len(trainLoader)
     if is_pretrained == False:
         optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=momentum)
@@ -27,8 +27,6 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save
         optimizer = torch.optim.SGD(params, lr=LR)
     
     model.train()
-    train_loss_sum = 0
-    total = 0
     data_size = len(trainLoader.dataset)
     for batch, (data_batch, labels) in enumerate(trainLoader):
         # data_batch = data_batch.view(data_batch.shape[0], 1, data_batch.shape[1])
@@ -44,19 +42,20 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save
         loss.backward()
         optimizer.step()
 
-        if batch % 20 == 0:
+        if batch % 5 == 0:
             loss, current = loss.item(), batch * len(data_batch)
             metric = metric_fn(pred.round().cpu().detach().numpy(), labels.cpu().detach().numpy())
             # metric = metric.item()
             print(f"loss:{loss:>7f})----- metric: {metric:>7f}    [{current:>5d}/{data_size:>5d}]")
-            history['train'].append(loss)
-            history['f1_train'].append(metric)
+            # history['train'].append(loss)
+            # history['f1_train'].append(metric)
+    
+    print(f"Loss: {loss:>3f}, Metric: {metric:>3f}")
+    history['train'].append(loss)
+    history['train_metric'].append(metric)
     torch.save(model, save_path)
 
-    # Here maybe add the accuracy
-    print(f"F1 score accuracy:{metric}")
-
-def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, beta=1.0):
+def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, beta=1.0, verbose=False):
     num_batches = len(dataloader)
     eval_metric = 0
     loss = 0
@@ -109,9 +108,10 @@ def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, bet
         }
         # Here maybe the accuracy
         # eval_metric /= num_batches
-    print(f"Test Accuracy: {metrics['accuracy']:>5f} \n")
-    print(f"Test F1 Score: {metrics['f1_score']:>5f} \n")
+    print(f"\nTest Accuracy: {metrics['accuracy']:>5f}")
+    print(f"Test F1 Score: {metrics['f1_score']:>5f}")
     print(f"Test Loss: {loss:>5f} \n")
     print(cm)
     history['val'].append(loss.item())
     history['f1_test'].append(metrics['f1_score'])
+    history['acc_test'].append(metrics['accuracy'])

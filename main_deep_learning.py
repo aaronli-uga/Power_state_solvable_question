@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-02 22:49:07
+LastEditTime: 2022-08-03 11:35:52
 Description: 
 '''
 #%%
@@ -100,13 +100,13 @@ def main(verbose=False, method=0):
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 30
+    epochs = 50
     Lr = 0.01
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
 
     summary(model, input_size=(64, 1, num_features), verbose=1)
-    history = dict(train=[], val=[], f1_train=[], f1_test=[], train_metric=[], acc_test=[])
+    history = dict(train_loss=[], test_loss=[], acc_train=[],  acc_test=[], f1_train=[], f1_test=[])
 
     start = time.time()
     for t in range(epochs):
@@ -168,10 +168,28 @@ def main(verbose=False, method=0):
 
     #%%
     plt.figure(figsize=(10,8))
-    plt.plot(history['val'])
+    plt.title('Train Loss')
+    plt.plot(history['train_loss'])
     plt.show()
+
     plt.figure(figsize=(10,8))
+    plt.title('Test Loss')
+    plt.plot(history['test_loss'])
+    plt.show()
+
+    plt.figure(figsize=(10,8))
+    plt.title('Train Accuracy')
+    plt.plot(history['acc_train'])
+    plt.show()
+
+    plt.figure(figsize=(10,8))
+    plt.title('Test Accuracy')
     plt.plot(history['acc_test'])
+    plt.show()
+
+    plt.figure(figsize=(10,8))
+    plt.title('Test F1')
+    plt.plot(history['f1_test'])
     plt.show()
     # %%
 

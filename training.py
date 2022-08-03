@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-02 22:49:32
+LastEditTime: 2022-08-03 11:29:15
 Description: 
 '''
 from curses import mousemask
@@ -18,13 +18,16 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save
     num_batches = len(trainLoader)
     if is_pretrained == False:
         optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=momentum)
+        # optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     else:
         # frozen the layer no need to train
         # for weights in model.encoder.parameters():
         #     weights.requires_grad = False
         
         params = filter(lambda p: p.requires_grad, model.parameters())
-        optimizer = torch.optim.SGD(params, lr=LR)
+        optimizer = torch.optim.Adam(params, lr=LR)
+        # optimizer = torch.optim.Adam(params, lr=LR)
+
     
     model.train()
     data_size = len(trainLoader.dataset)
@@ -46,13 +49,14 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save
             loss, current = loss.item(), batch * len(data_batch)
             metric = metric_fn(pred.round().cpu().detach().numpy(), labels.cpu().detach().numpy())
             # metric = metric.item()
-            print(f"loss:{loss:>7f})----- metric: {metric:>7f}    [{current:>5d}/{data_size:>5d}]")
+            if verbose:
+                print(f"loss:{loss:>7f})----- metric: {metric:>7f}    [{current:>5d}/{data_size:>5d}]")
             # history['train'].append(loss)
             # history['f1_train'].append(metric)
     
     print(f"Loss: {loss:>3f}, Metric: {metric:>3f}")
-    history['train'].append(loss)
-    history['train_metric'].append(metric)
+    history['train_loss'].append(loss.item())
+    history['acc_train'].append(metric)
     torch.save(model, save_path)
 
 def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, beta=1.0, verbose=False):
@@ -112,6 +116,6 @@ def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, bet
     print(f"Test F1 Score: {metrics['f1_score']:>5f}")
     print(f"Test Loss: {loss:>5f} \n")
     print(cm)
-    history['val'].append(loss.item())
+    history['test_loss'].append(loss.item())
     history['f1_test'].append(metrics['f1_score'])
     history['acc_test'].append(metrics['accuracy'])

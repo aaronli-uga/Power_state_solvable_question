@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-03 11:29:15
+LastEditTime: 2022-08-03 18:33:01
 Description: 
 '''
 from curses import mousemask
@@ -14,7 +14,7 @@ from tqdm import tqdm
 from sklearn.metrics import confusion_matrix, recall_score, f1_score
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, average_precision_score
 
-def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save_path = 'solvable_best_model.pth', is_pretrained = False, momentum=0.9, verbose=False):
+def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_pretrained = False, momentum=0.9, verbose=False):
     num_batches = len(trainLoader)
     if is_pretrained == False:
         optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=momentum)
@@ -57,7 +57,6 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, save
     print(f"Loss: {loss:>3f}, Metric: {metric:>3f}")
     history['train_loss'].append(loss.item())
     history['acc_train'].append(metric)
-    torch.save(model, save_path)
 
 def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, beta=1.0, verbose=False):
     num_batches = len(dataloader)

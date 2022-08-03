@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-03 17:20:55
+LastEditTime: 2022-08-03 18:50:52
 Description: 
 '''
 #%%
@@ -34,10 +34,16 @@ def main(verbose=False, method=0):
     """
     method: 0-randomly sampling, 1-active learning, 2-active learning with physical information
     """
+
+    model_path = "savedModel/active_learning/"
+    if os.path.isdir(model_path) == False:
+        os.makedirs(model_path)
+    
     if method == 2:
         if verbose: print("configure the physical information for active learning")
         pass
 
+    # define the uncertainty methods
     sampler = UncertaintySampling()
     sample_method = sampler.least_confidence
     # IEEE 39 bus
@@ -87,14 +93,14 @@ def main(verbose=False, method=0):
     X_train = (X_train - train_mean) / train_std
     X_test = (X_test - train_mean) / train_std
 
-    all_data = MyLoader(data_root=X_all, data_label=y)
-    training_data = MyLoader(data_root=X_train, data_label=y_train)
+    # all_data = MyLoader(data_root=X_all, data_label=y)
+    # training_data = MyLoader(data_root=X_train, data_label=y_train)
     testing_data = MyLoader(data_root=X_test, data_label=y_test)
 
-    all_dataloader = DataLoader(all_data, batch_size = 1, shuffle = False)
-    train_dataloader = DataLoader(training_data, batch_size = 64, shuffle = True)
+    # all_dataloader = DataLoader(all_data, batch_size = 1, shuffle = False)
+    # train_dataloader = DataLoader(training_data, batch_size = 64, shuffle = True)
     test_dataloader = DataLoader(testing_data, batch_size = 1024, shuffle = False)
-    draw_test_dataloader = DataLoader(testing_data, batch_size = 1, shuffle = False)
+    # draw_test_dataloader = DataLoader(testing_data, batch_size = 1, shuffle = False)
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)
@@ -103,14 +109,14 @@ def main(verbose=False, method=0):
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 10
-    Lr = 0.01
+    epochs = 20
+    Lr = 0.001
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
 
     summary(model, input_size=(64, 1, num_features), verbose=1)
     history = dict(train_loss=[], test_loss=[], acc_train=[],  acc_test=[], f1_train=[], f1_test=[])
-
+    max_loss = 1
     start = time.time()
     for t in range(epochs):
         print(f"Epoch {t + 1}/{epochs}, learning rate {Lr}")
@@ -168,7 +174,12 @@ def main(verbose=False, method=0):
             verbose=verbose
         )
 
-        heatmap(model=model, dataset=X_all, device=device, uncertainty_methods=sample_method, epoch=t+1)
+        if (t+1) % 10 == 0:
+            heatmap(model=model, dataset=X_all, device=device, uncertainty_methods=sample_method, epoch=t+1)
+        
+        if max_loss > history['test_loss'][-1]:
+            max_loss = history['test_loss'][-1]
+            torch.save(model, model_path + "bestmodel.pth")
     # heatmap3D(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
     # heatmap3D(model=model, dataset=X_test, dataloader=draw_test_dataloader, device=device)
 

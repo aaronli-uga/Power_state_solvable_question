@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-03 18:50:52
+LastEditTime: 2022-08-04 12:28:21
 Description: 
 '''
 #%%
@@ -30,18 +30,28 @@ from utils import heatmap, heatmap3D, UncertaintySampling, dataSampling
 warnings.filterwarnings('always')
 
 
-def main(verbose=False, method=0):
+def main(verbose=False, method=0, pretrained=False):
     """
     method: 0-randomly sampling, 1-active learning, 2-active learning with physical information
     """
 
-    model_path = "savedModel/active_learning/"
+    model_path = "savedModel/radom_sample/"
     if os.path.isdir(model_path) == False:
         os.makedirs(model_path)
     
     if method == 2:
         if verbose: print("configure the physical information for active learning")
-        pass
+        # theoretical_bound
+        tb = {
+            "x1_hi_out": 20,
+            "x1_lo_out": -20,
+            "x2_hi_out": 20,
+            "x2_lo_out": -20,
+            "x1_hi_in": 7,
+            "x1_lo_in": -2,
+            "x2_hi_in": 3,
+            "x2_lo_in": -5
+        }
 
     # define the uncertainty methods
     sampler = UncertaintySampling()
@@ -67,6 +77,22 @@ def main(verbose=False, method=0):
     df = pd.read_csv(y_csv)
     y = df.to_numpy()
 
+    # plot the figure of raw data distribution
+    if verbose:
+        plt.figure()
+        plt.title('Raw data distribution')
+        plt.scatter(X[:,0], X[:,1],c=y)
+        if method == 2:
+            plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
+            plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+            plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+            plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+            plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
+            plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+            plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+            plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+        plt.show()
+
     #%% preprocessing
 
     # The number of samples for the initial training.
@@ -89,10 +115,15 @@ def main(verbose=False, method=0):
     train_mean = X_train.mean(axis=0)
     train_std = X_train.std(axis=0)
 
-    X_all = (X - all_data_mean) / all_data_std
+    X_all = (X - train_mean) / train_std
     X_train = (X_train - train_mean) / train_std
     X_test = (X_test - train_mean) / train_std
-
+    
+    # normalize the physical boundary
+    if method == 2:
+        for key in tb:
+            tb[key] = (tb[key] - train_mean) / train_std
+            
     # all_data = MyLoader(data_root=X_all, data_label=y)
     # training_data = MyLoader(data_root=X_train, data_label=y_train)
     testing_data = MyLoader(data_root=X_test, data_label=y_test)
@@ -109,7 +140,7 @@ def main(verbose=False, method=0):
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 20
+    epochs = 50
     Lr = 0.001
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
@@ -152,6 +183,15 @@ def main(verbose=False, method=0):
         current_data = MyLoader(data_root=cur_X_train, data_label=cur_y_train)
         train_dataloader = DataLoader(current_data, batch_size = 16, shuffle = True)
 
+        # plot the sampled data
+        if verbose:
+            plt.figure()
+            plt.title('Sampled data plot')
+            plt.scatter(X_all[:,0], X_all[:,1], c=y)
+            plt.scatter(cur_training_data[:,0], cur_training_data[:,1], c='r', marker="v")
+            plt.show()
+
+
         print('-' * 40)
         train_loop(
             trainLoader=train_dataloader, 
@@ -174,7 +214,7 @@ def main(verbose=False, method=0):
             verbose=verbose
         )
 
-        if (t+1) % 10 == 0:
+        if (t+1) % 50 == 0:
             heatmap(model=model, dataset=X_all, device=device, uncertainty_methods=sample_method, epoch=t+1)
         
         if max_loss > history['test_loss'][-1]:
@@ -217,4 +257,4 @@ def main(verbose=False, method=0):
 
 
 if __name__ == '__main__':
-    main(verbose=True, method=1)
+    main(verbose=True, method=1, pretrained=False)

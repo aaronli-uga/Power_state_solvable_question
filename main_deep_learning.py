@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-05 11:37:42
+LastEditTime: 2022-08-05 17:24:05
 Description: 
 '''
 #%%
@@ -147,21 +147,21 @@ def main(verbose=False, method=0, pretrained=False):
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)
-    if method == 2:
-        train_data_pool = removeOutBound(tb=tb, data=train_data_pool)
-        if verbose:
-            plt.title('Data distribution with physical theoritic data boundary')
-            plt.scatter(X_all[:,0], X_all[:,1], c=y)
-            plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v')
-            plt.show()
+    # if method == 2:
+    #     train_data_pool = removeOutBound(tb=tb, data=train_data_pool)
+    #     if verbose:
+    #         plt.title('Data distribution with physical theoritic data boundary')
+    #         plt.scatter(X_all[:,0], X_all[:,1], c=y)
+    #         plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v')
+    #         plt.show()
     
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 100
-    Lr = 0.005
+    epochs = 200
+    Lr = 0.001
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
     bs = 16
@@ -178,6 +178,19 @@ def main(verbose=False, method=0, pretrained=False):
             cur_training_data = train_data_pool[0:num_init_samples, :]
             sampled_data_pool = np.append(sampled_data_pool, cur_training_data, axis=0)
             train_data_pool = np.delete(train_data_pool, obj=slice(0, num_init_samples), axis=0)
+            if verbose:
+                    plt.title('Data distribution with physical theoritic data boundary')
+                    plt.scatter(X_all[:,0], X_all[:,1], c=y)
+                    plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v')
+                    plt.show()
+            if method == 2:
+                # After inital randomly sample, the train data pool will only include data in the uncertaintly area
+                train_data_pool = removeOutBound(tb=tb, data=train_data_pool)
+                if verbose:
+                    plt.title('Data distribution with physical theoritic data boundary')
+                    plt.scatter(X_all[:,0], X_all[:,1], c=y)
+                    plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v')
+                    plt.show()
         else:
             if verbose: print(f"The sampling round, {num_samples_per_epoch} numbers of sample have been randomly sampled")
 
@@ -234,8 +247,9 @@ def main(verbose=False, method=0, pretrained=False):
             verbose=verbose
         )
 
-        if (t+1) % 20 == 0:
-            heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, tb=tb)
+        if verbose:
+            if (t+1) % 20 == 0:
+                heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, tb=tb)
         
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
@@ -279,4 +293,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=True, method=1, pretrained=False)
+    main(verbose=False, method=2, pretrained=False)

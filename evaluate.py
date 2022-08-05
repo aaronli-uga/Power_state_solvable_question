@@ -2,16 +2,16 @@
 Author: Qi7
 Date: 2022-08-03 19:48:05
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-04 20:17:08
+LastEditTime: 2022-08-05 16:09:13
 Description: 
 '''
 from cProfile import label
 import numpy as np
 from matplotlib import pyplot as plt
 
-random_history = np.load("savedModel/random_sample/epochs100_lr_0.001_bs_16_history.npy", allow_pickle=True).item()
-active_history= np.load("savedModel/active_learning/epochs100_lr_0.001_bs_16_history.npy", allow_pickle=True).item()
-theoretical_history = np.load("savedModel/theoretical/epochs100_lr_0.001_bs_16_history.npy", allow_pickle=True).item()
+random_history = np.load("savedModel/random_sample/epochs200_lr_0.003_bs_16_history.npy", allow_pickle=True).item()
+active_history= np.load("savedModel/active_learning/epochs200_lr_0.003_bs_16_history.npy", allow_pickle=True).item()
+theoretical_history = np.load("savedModel/theoretical/epochs200_lr_0.003_bs_16_history.npy", allow_pickle=True).item()
 
 plt.figure(figsize=(10,8))
 plt.title('Test Loss')

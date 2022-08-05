@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-04 18:20:23
+LastEditTime: 2022-08-05 16:12:10
 Description: 
 '''
 from curses import mousemask
@@ -111,10 +111,11 @@ def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, bet
         }
         # Here maybe the accuracy
         # eval_metric /= num_batches
-    print(f"\nTest Accuracy: {metrics['accuracy']:>5f}")
-    print(f"Test F1 Score: {metrics['f1_score']:>5f}")
-    print(f"Test Loss: {loss:>5f} \n")
-    print(cm)
+    if verbose:
+        print(f"\nTest Accuracy: {metrics['accuracy']:>5f}")
+        print(f"Test F1 Score: {metrics['f1_score']:>5f}")
+        print(f"Test Loss: {loss:>5f} \n")
+        print(cm)
     history['test_loss'].append(loss.item())
     history['f1_test'].append(metrics['f1_score'])
     history['acc_test'].append(metrics['accuracy'])

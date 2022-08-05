@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-05 10:54:09
+LastEditTime: 2022-08-05 11:37:42
 Description: 
 '''
 #%%
@@ -160,8 +160,8 @@ def main(verbose=False, method=0, pretrained=False):
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 10
-    Lr = 0.001
+    epochs = 100
+    Lr = 0.005
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
     bs = 16
@@ -234,7 +234,7 @@ def main(verbose=False, method=0, pretrained=False):
             verbose=verbose
         )
 
-        if (t+1) % 1 == 0:
+        if (t+1) % 20 == 0:
             heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, tb=tb)
         
         if max_loss > history['test_loss'][-1]:

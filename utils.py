@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-03 17:20:53
+LastEditTime: 2022-08-04 17:52:58
 Description: 
 '''
 import pandas as pd
@@ -87,7 +87,7 @@ def predict(row, model):
     return yhat
 
 
-def heatmap(model, dataset, device, uncertainty_methods, epoch):
+def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, tb=None):
     preds = []
     model.eval()
 
@@ -108,6 +108,16 @@ def heatmap(model, dataset, device, uncertainty_methods, epoch):
     plt.title(f"uncertainty heatmap (Epoch: {epoch})")
     plt.scatter(feature_1, feature_2, c=preds, cmap="coolwarm")
     plt.colorbar()
+    plt.scatter(sampled_data[:,0], sampled_data[:,1], c='g', marker="v")
+    if tb != None:
+        plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
+        plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+        plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+        plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+        plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
+        plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+        plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+        plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
     plt.show()
 
 def heatmap3D(model, dataset, device):
@@ -164,3 +174,17 @@ def dataSampling(model, uncertainty_methods, data_pool, device):
 
     # from high to low
     return data_pool[sorted_index[::-1]]
+
+
+def removeOutBound(tb, data):
+    """
+    Remove the data not in the theoritical bound
+    """
+    data = np.delete(data, np.where(
+        (data[:,0] >= tb["x1_hi_out"]) |
+        (data[:,0] <= tb["x1_lo_out"]) |
+        (data[:,1] >= tb["x2_hi_out"]) |
+        (data[:,1] <= tb["x2_lo_out"]) |
+        ((data[:,0] <= tb["x1_hi_in"]) & (data[:,0] >= tb["x1_lo_in"]) & (data[:,1] <= tb["x2_hi_in"]) & (data[:,1] >= tb["x2_lo_in"]))
+    )[0], axis=0)
+    return data

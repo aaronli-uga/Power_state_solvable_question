@@ -2,17 +2,15 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-04 12:28:21
+LastEditTime: 2022-08-05 10:45:59
 Description: 
 '''
 #%%
 import os
 import numpy as np
-import copy
 import time
 import pandas as pd
 import torch
-import copy
 import warnings
 from torch.utils.data import DataLoader
 from dataloaders import MyLoader
@@ -24,7 +22,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, aver
 from matplotlib import pyplot as plt
 from training import train_loop, eval_loop
 from torch.optim import lr_scheduler
-from utils import heatmap, heatmap3D, UncertaintySampling, dataSampling
+from utils import heatmap, heatmap3D, UncertaintySampling, dataSampling, removeOutBound
 
 # Ignore the warning information
 warnings.filterwarnings('always')
@@ -32,16 +30,26 @@ warnings.filterwarnings('always')
 
 def main(verbose=False, method=0, pretrained=False):
     """
-    method: 0-randomly sampling, 1-active learning, 2-active learning with physical information
-    """
+    method: 
+    0-randomly sampling, 
+    1-active learning, 
+    2-active learning with physical information
 
-    model_path = "savedModel/radom_sample/"
+    """
+    if method == 0:
+        model_path = "savedModel/random_sample/"
+    elif method == 1:
+        model_path = "savedModel/active_learning/"
+    elif method == 2:
+        model_path = "savedModel/theoretical/"
+        
     if os.path.isdir(model_path) == False:
         os.makedirs(model_path)
     
+    # theoretical_bound
+    tb = None
     if method == 2:
         if verbose: print("configure the physical information for active learning")
-        # theoretical_bound
         tb = {
             "x1_hi_out": 20,
             "x1_lo_out": -20,
@@ -56,6 +64,7 @@ def main(verbose=False, method=0, pretrained=False):
     # define the uncertainty methods
     sampler = UncertaintySampling()
     sample_method = sampler.least_confidence
+    
     # IEEE 39 bus
     # X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
     # y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
@@ -96,10 +105,10 @@ def main(verbose=False, method=0, pretrained=False):
     #%% preprocessing
 
     # The number of samples for the initial training.
-    num_init_samples = 1000
+    num_init_samples = 200
 
     # The number of samples per epoch or iteration
-    num_samples_per_epoch = 100
+    num_samples_per_epoch = 20
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=23)
 
@@ -122,8 +131,11 @@ def main(verbose=False, method=0, pretrained=False):
     # normalize the physical boundary
     if method == 2:
         for key in tb:
-            tb[key] = (tb[key] - train_mean) / train_std
-            
+            if "x1" in key:
+                tb[key] = (tb[key] - train_mean[0]) / train_std[0]
+            else:
+                tb[key] = (tb[key] - train_mean[1]) / train_std[1]
+    
     # all_data = MyLoader(data_root=X_all, data_label=y)
     # training_data = MyLoader(data_root=X_train, data_label=y_train)
     testing_data = MyLoader(data_root=X_test, data_label=y_test)
@@ -135,15 +147,24 @@ def main(verbose=False, method=0, pretrained=False):
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)
+    if method == 2:
+        train_data_pool = removeOutBound(tb=tb, data=train_data_pool)
+        if verbose:
+            plt.title('Data distribution with physical theoritic data boundary')
+            plt.scatter(X_all[:,0], X_all[:,1], c=y)
+            plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v')
+            plt.show()
+    
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 50
+    epochs = 100
     Lr = 0.001
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
+    bs = 16
 
     summary(model, input_size=(64, 1, num_features), verbose=1)
     history = dict(train_loss=[], test_loss=[], acc_train=[],  acc_test=[], f1_train=[], f1_test=[])
@@ -167,29 +188,28 @@ def main(verbose=False, method=0, pretrained=False):
                 sampled_data_pool = np.append(sampled_data_pool, cur_training_data, axis=0)
                 train_data_pool = np.delete(train_data_pool, obj=slice(0, num_samples_per_epoch), axis=0)
             # if active learning sample
-            elif method == 1:
-                print("test")
+            elif method == 1 or method == 2:
                 train_data_pool = dataSampling(model=model, uncertainty_methods=sample_method, data_pool=train_data_pool, device=device)
                 cur_training_data = train_data_pool[0:num_samples_per_epoch, :]
                 sampled_data_pool = np.append(sampled_data_pool, cur_training_data, axis=0)
                 train_data_pool = np.delete(train_data_pool, obj=slice(0, num_samples_per_epoch), axis=0)
             # if active learning sample with physical information
-            elif method == 2:
-                pass
+            # elif method == 2:
+            #     pass
             else:
                 if verbose: print("invalid input")
                 exit()
         cur_X_train, cur_y_train = sampled_data_pool[:, 0:num_features], sampled_data_pool[:, -1].reshape(-1, 1)
         current_data = MyLoader(data_root=cur_X_train, data_label=cur_y_train)
-        train_dataloader = DataLoader(current_data, batch_size = 16, shuffle = True)
+        train_dataloader = DataLoader(current_data, batch_size = bs, shuffle = True)
 
         # plot the sampled data
-        if verbose:
-            plt.figure()
-            plt.title('Sampled data plot')
-            plt.scatter(X_all[:,0], X_all[:,1], c=y)
-            plt.scatter(cur_training_data[:,0], cur_training_data[:,1], c='r', marker="v")
-            plt.show()
+        # if verbose:
+        #     plt.figure()
+        #     plt.title('Sampled data plot')
+        #     plt.scatter(X_all[:,0], X_all[:,1], c=y)
+        #     plt.scatter(cur_training_data[:,0], cur_training_data[:,1], c='r', marker="v")
+        #     plt.show()
 
 
         print('-' * 40)
@@ -214,47 +234,49 @@ def main(verbose=False, method=0, pretrained=False):
             verbose=verbose
         )
 
-        if (t+1) % 50 == 0:
-            heatmap(model=model, dataset=X_all, device=device, uncertainty_methods=sample_method, epoch=t+1)
+        # if (t+1) % 20 == 0:
+        #     heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, tb=tb)
         
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
-            torch.save(model, model_path + "bestmodel.pth")
+            torch.save(model, model_path + f"epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel.pth")
     # heatmap3D(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
     # heatmap3D(model=model, dataset=X_test, dataloader=draw_test_dataloader, device=device)
 
-
-
     time_delta = time.time() - start
-    print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
-    #%%
-    plt.figure(figsize=(10,8))
-    plt.title('Train Loss')
-    plt.plot(history['train_loss'])
-    plt.show()
+    # save history file
+    np.save(model_path + f"epochs{epochs}_lr_{Lr}_bs_{bs}_history.npy", history)
 
-    plt.figure(figsize=(10,8))
-    plt.title('Test Loss')
-    plt.plot(history['test_loss'])
-    plt.show()
+    if verbose:
+        print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
-    plt.figure(figsize=(10,8))
-    plt.title('Train Accuracy')
-    plt.plot(history['acc_train'])
-    plt.show()
+        #%%
+        plt.figure(figsize=(10,8))
+        plt.title('Train Loss')
+        plt.plot(history['train_loss'])
+        plt.show()
 
-    plt.figure(figsize=(10,8))
-    plt.title('Test Accuracy')
-    plt.plot(history['acc_test'])
-    plt.show()
+        plt.figure(figsize=(10,8))
+        plt.title('Test Loss')
+        plt.plot(history['test_loss'])
+        plt.show()
 
-    plt.figure(figsize=(10,8))
-    plt.title('Test F1')
-    plt.plot(history['f1_test'])
-    plt.show()
+        plt.figure(figsize=(10,8))
+        plt.title('Train Accuracy')
+        plt.plot(history['acc_train'])
+        plt.show()
+
+        plt.figure(figsize=(10,8))
+        plt.title('Test Accuracy')
+        plt.plot(history['acc_test'])
+        plt.show()
+
+        plt.figure(figsize=(10,8))
+        plt.title('Test F1')
+        plt.plot(history['f1_test'])
+        plt.show()
     # %%
 
-
 if __name__ == '__main__':
-    main(verbose=True, method=1, pretrained=False)
+    main(verbose=False, method=1, pretrained=False)

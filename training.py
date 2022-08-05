@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-03 18:33:01
+LastEditTime: 2022-08-04 18:20:23
 Description: 
 '''
 from curses import mousemask
@@ -44,9 +44,9 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_p
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
+        loss = loss.item()
         if batch % 5 == 0:
-            loss, current = loss.item(), batch * len(data_batch)
+            current = batch * len(data_batch)
             metric = metric_fn(pred.round().cpu().detach().numpy(), labels.cpu().detach().numpy())
             # metric = metric.item()
             if verbose:
@@ -55,7 +55,7 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_p
             # history['f1_train'].append(metric)
     
     print(f"Loss: {loss:>3f}, Metric: {metric:>3f}")
-    history['train_loss'].append(loss.item())
+    history['train_loss'].append(loss)
     history['acc_train'].append(metric)
 
 def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, beta=1.0, verbose=False):

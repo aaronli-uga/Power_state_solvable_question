@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-05 10:52:59
+LastEditTime: 2022-08-05 10:54:09
 Description: 
 '''
 #%%
@@ -105,10 +105,10 @@ def main(verbose=False, method=0, pretrained=False):
     #%% preprocessing
 
     # The number of samples for the initial training.
-    num_init_samples = 200
+    num_init_samples = 100
 
     # The number of samples per epoch or iteration
-    num_samples_per_epoch = 20
+    num_samples_per_epoch = 10
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=23)
 
@@ -160,7 +160,7 @@ def main(verbose=False, method=0, pretrained=False):
     model = FNN(n_inputs=num_features)
     model.to(device)
 
-    epochs = 100
+    epochs = 10
     Lr = 0.001
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
@@ -234,8 +234,8 @@ def main(verbose=False, method=0, pretrained=False):
             verbose=verbose
         )
 
-        # if (t+1) % 20 == 0:
-        #     heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, tb=tb)
+        if (t+1) % 1 == 0:
+            heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, tb=tb)
         
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
@@ -279,4 +279,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=False, method=1, pretrained=False)
+    main(verbose=True, method=1, pretrained=False)

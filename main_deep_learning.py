@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-04 12:28:21
+LastEditTime: 2022-08-05 09:24:19
 Description: 
 '''
 #%%
@@ -34,10 +34,14 @@ def main(verbose=False, method=0, pretrained=False):
     """
     method: 0-randomly sampling, 1-active learning, 2-active learning with physical information
     """
-
     model_path = "savedModel/radom_sample/"
     if os.path.isdir(model_path) == False:
         os.makedirs(model_path)
+    
+    pretrained_model = None
+    if pretrained:
+        # if pretrained, configure the pretrained model path
+        pretrained_model = ""
     
     if method == 2:
         if verbose: print("configure the physical information for active learning")

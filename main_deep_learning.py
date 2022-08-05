@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-05 17:24:05
+LastEditTime: 2022-08-05 18:34:47
 Description: 
 '''
 #%%
@@ -48,18 +48,18 @@ def main(verbose=False, method=0, pretrained=False):
     
     # theoretical_bound
     tb = None
-    if method == 2:
-        if verbose: print("configure the physical information for active learning")
-        tb = {
-            "x1_hi_out": 20,
-            "x1_lo_out": -20,
-            "x2_hi_out": 20,
-            "x2_lo_out": -20,
-            "x1_hi_in": 7,
-            "x1_lo_in": -2,
-            "x2_hi_in": 3,
-            "x2_lo_in": -5
-        }
+    # if method:
+    if verbose: print("configure the physical information for active learning")
+    tb = {
+        "x1_hi_out": 20,
+        "x1_lo_out": -20,
+        "x2_hi_out": 20,
+        "x2_lo_out": -20,
+        "x1_hi_in": 7,
+        "x1_lo_in": -2,
+        "x2_hi_in": 3,
+        "x2_lo_in": -5
+    }
 
     # define the uncertainty methods
     sampler = UncertaintySampling()
@@ -129,12 +129,12 @@ def main(verbose=False, method=0, pretrained=False):
     X_test = (X_test - train_mean) / train_std
     
     # normalize the physical boundary
-    if method == 2:
-        for key in tb:
-            if "x1" in key:
-                tb[key] = (tb[key] - train_mean[0]) / train_std[0]
-            else:
-                tb[key] = (tb[key] - train_mean[1]) / train_std[1]
+    # if method:
+    for key in tb:
+        if "x1" in key:
+            tb[key] = (tb[key] - train_mean[0]) / train_std[0]
+        else:
+            tb[key] = (tb[key] - train_mean[1]) / train_std[1]
     
     # all_data = MyLoader(data_root=X_all, data_label=y)
     # training_data = MyLoader(data_root=X_train, data_label=y_train)
@@ -147,6 +147,12 @@ def main(verbose=False, method=0, pretrained=False):
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)
+    test_data_pool = np.append(X_test, y_test, 1)
+    test_data_pool = removeOutBound(tb=tb, data=test_data_pool)
+
+    cur_X_test, cur_y_test = test_data_pool[:, 0:num_features], test_data_pool[:, -1].reshape(-1, 1)
+    current_data_test = MyLoader(data_root=cur_X_test, data_label=cur_y_test)
+    test_dataloader = DataLoader(current_data_test, batch_size = 16, shuffle = True)
     # if method == 2:
     #     train_data_pool = removeOutBound(tb=tb, data=train_data_pool)
     #     if verbose:
@@ -249,7 +255,7 @@ def main(verbose=False, method=0, pretrained=False):
 
         if verbose:
             if (t+1) % 20 == 0:
-                heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, tb=tb)
+                heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, tb=tb)
         
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
@@ -293,4 +299,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=False, method=2, pretrained=False)
+    main(verbose=False, method=1, pretrained=False)

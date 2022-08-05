@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-04 17:52:58
+LastEditTime: 2022-08-05 17:49:59
 Description: 
 '''
 import pandas as pd
@@ -87,7 +87,7 @@ def predict(row, model):
     return yhat
 
 
-def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, tb=None):
+def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, tb=None):
     preds = []
     model.eval()
 
@@ -109,7 +109,7 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, tb
     plt.scatter(feature_1, feature_2, c=preds, cmap="coolwarm")
     plt.colorbar()
     plt.scatter(sampled_data[:,0], sampled_data[:,1], c='g', marker="v")
-    if tb != None:
+    if tb != None and method == 2:
         plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
         plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
         plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)

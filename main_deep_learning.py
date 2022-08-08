@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-08 17:34:33
+LastEditTime: 2022-08-08 18:19:36
 Description: 
 '''
 #%%
@@ -34,6 +34,8 @@ def main(verbose=False, method=0, pretrained=False):
     0-randomly sampling, 
     1-active learning, 
     2-active learning with physical information
+    
+    if pretrained = True, transfer learning is being used.
 
     """
     if method == 0:
@@ -94,6 +96,8 @@ def main(verbose=False, method=0, pretrained=False):
         plt.figure()
         plt.title('Raw data distribution')
         plt.scatter(X[:,0], X[:,1],c=y)
+
+        # plot the physical boundary
         if method == 2:
             plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
             plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
@@ -124,6 +128,8 @@ def main(verbose=False, method=0, pretrained=False):
     train_mean = X_train.mean(axis=0)
     train_std = X_train.std(axis=0)
 
+
+    # data normalization
     X_all = (X - train_mean) / train_std
     X_train = (X_train - train_mean) / train_std
     X_test = (X_test - train_mean) / train_std
@@ -169,18 +175,21 @@ def main(verbose=False, method=0, pretrained=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model = FNN(n_inputs=num_features, tb=tb)
+
+    # load the transfered model
     if pretrained:
         model.load_state_dict(torch.load(trained_model))
     model.to(device)
 
+    # hyper parameters
     epochs = 200
     Lr = 0.001
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
     bs = 16
 
-    # summary(model, input_size=(64, 1, num_features), verbose=1)
-    history = dict(train_loss=[], test_loss=[], acc_train=[],  acc_test=[], f1_train=[], f1_test=[])
+    summary(model, input_size=(64, 1, num_features), verbose=1)
+    history = dict(train_loss=[], test_loss=[], acc_train=[], acc_test=[], f1_train=[], f1_test=[])
     max_loss = 1
     start = time.time()
     for t in range(epochs):
@@ -276,13 +285,12 @@ def main(verbose=False, method=0, pretrained=False):
     # heatmap3D(model=model, dataset=X_test, dataloader=draw_test_dataloader, device=device)
 
     time_delta = time.time() - start
+    print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
     # save history file
     np.save(model_path + f"v2_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
-        print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
-
         #%%
         plt.figure(figsize=(10,8))
         plt.title('Train Loss')

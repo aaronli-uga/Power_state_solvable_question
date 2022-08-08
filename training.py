@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-05 16:12:10
+LastEditTime: 2022-08-08 17:39:21
 Description: 
 '''
 from curses import mousemask
@@ -15,14 +15,20 @@ from sklearn.metrics import confusion_matrix, recall_score, f1_score
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, average_precision_score
 
 def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_pretrained = False, momentum=0.9, verbose=False):
-    num_batches = len(trainLoader)
+    # num_batches = len(trainLoader)
     if is_pretrained == False:
         optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=momentum)
         # optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     else:
         # frozen the layer no need to train
-        # for weights in model.encoder.parameters():
-        #     weights.requires_grad = False
+        for weights in model.parameters():
+            weights.requires_grad = False
+        
+        # The last two layers will be trained
+        model.fc4.weight.requires_grad = True
+        model.fc4.bias.requires_grad = True
+        model.fc5.weight.requires_grad = True
+        model.fc5.bias.requires_grad = True
         
         params = filter(lambda p: p.requires_grad, model.parameters())
         optimizer = torch.optim.Adam(params, lr=LR)

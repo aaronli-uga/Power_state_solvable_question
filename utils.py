@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-05 17:49:59
+LastEditTime: 2022-08-08 15:27:36
 Description: 
 '''
 import pandas as pd
@@ -188,3 +188,16 @@ def removeOutBound(tb, data):
         ((data[:,0] <= tb["x1_hi_in"]) & (data[:,0] >= tb["x1_lo_in"]) & (data[:,1] <= tb["x2_hi_in"]) & (data[:,1] >= tb["x2_lo_in"]))
     )[0], axis=0)
     return data
+
+def isInBound(tb, data) -> bool:
+    """
+    return 1 if the data is in the solvable area
+    return 0 if the data is in the non-solvable area
+    return False if the data can't be decided by the theoritical bound
+    """
+    if ((data[0] >= tb["x1_hi_out"]) or (data[0] <= tb["x1_lo_out"]) or (data[:,1] >= tb["x2_hi_out"]) or (data[:,1] <= tb["x2_lo_out"])):
+        return 0
+    elif ((data[0] <= tb["x1_hi_in"]) & (data[0] >= tb["x1_lo_in"]) & (data[1] <= tb["x2_hi_in"]) & (data[1] >= tb["x2_lo_in"])):
+        return 1
+    else:
+        return False

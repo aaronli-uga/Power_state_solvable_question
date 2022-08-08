@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-05 18:34:47
+LastEditTime: 2022-08-08 17:34:33
 Description: 
 '''
 #%%
@@ -42,6 +42,9 @@ def main(verbose=False, method=0, pretrained=False):
         model_path = "savedModel/active_learning/"
     elif method == 2:
         model_path = "savedModel/theoretical/"
+
+    if pretrained:
+        trained_model = "savedModel/active_learning/epochs200_lr_0.001_bs_16_bestmodel.pth"
         
     if os.path.isdir(model_path) == False:
         os.makedirs(model_path)
@@ -70,12 +73,12 @@ def main(verbose=False, method=0, pretrained=False):
     # y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
 
     # IEEE 118 bus 2d 
-    X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d.csv"
-    y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
+    # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d.csv"
+    # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
 
     # IEEE 118 bus 2d version2
-    # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
-    # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d_v2.csv"
+    X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
+    y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d_v2.csv"
 
     # IEEE 118 bus 3d
     # X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
@@ -115,11 +118,8 @@ def main(verbose=False, method=0, pretrained=False):
     # number of input features
     num_features = X_train.shape[1]
 
-    # the data pool with data has been sampled
+    # the data pool with data has been sampled (features + label)
     sampled_data_pool = np.empty((0, X_train.shape[1]+1))
-
-    all_data_mean = X.mean(axis=0)
-    all_data_std = X.std(axis=0)
 
     train_mean = X_train.mean(axis=0)
     train_std = X_train.std(axis=0)
@@ -129,7 +129,7 @@ def main(verbose=False, method=0, pretrained=False):
     X_test = (X_test - train_mean) / train_std
     
     # normalize the physical boundary
-    # if method:
+    # if method 2:
     for key in tb:
         if "x1" in key:
             tb[key] = (tb[key] - train_mean[0]) / train_std[0]
@@ -142,12 +142,16 @@ def main(verbose=False, method=0, pretrained=False):
 
     # all_dataloader = DataLoader(all_data, batch_size = 1, shuffle = False)
     # train_dataloader = DataLoader(training_data, batch_size = 64, shuffle = True)
+
+    # global test dataset
     test_dataloader = DataLoader(testing_data, batch_size = 1024, shuffle = False)
     # draw_test_dataloader = DataLoader(testing_data, batch_size = 1, shuffle = False)
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)
     test_data_pool = np.append(X_test, y_test, 1)
+
+    # in this case we only test the data in the theoritical bound
     test_data_pool = removeOutBound(tb=tb, data=test_data_pool)
 
     cur_X_test, cur_y_test = test_data_pool[:, 0:num_features], test_data_pool[:, -1].reshape(-1, 1)
@@ -163,7 +167,10 @@ def main(verbose=False, method=0, pretrained=False):
     
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = FNN(n_inputs=num_features)
+
+    model = FNN(n_inputs=num_features, tb=tb)
+    if pretrained:
+        model.load_state_dict(torch.load(trained_model))
     model.to(device)
 
     epochs = 200
@@ -172,12 +179,13 @@ def main(verbose=False, method=0, pretrained=False):
     metric_fn = accuracy_score
     bs = 16
 
-    summary(model, input_size=(64, 1, num_features), verbose=1)
+    # summary(model, input_size=(64, 1, num_features), verbose=1)
     history = dict(train_loss=[], test_loss=[], acc_train=[],  acc_test=[], f1_train=[], f1_test=[])
     max_loss = 1
     start = time.time()
     for t in range(epochs):
-        print(f"Epoch {t + 1}/{epochs}, learning rate {Lr}")
+        print(f"Epoch {t + 1}/{epochs}, learning rate {Lr}")\
+        # for first epoch
         if t == 0:
             if verbose: print(f"The initial round, {num_init_samples} numbers of sample have been randomly sampled")
             np.random.shuffle(train_data_pool)
@@ -240,7 +248,8 @@ def main(verbose=False, method=0, pretrained=False):
             metric_fn=metric_fn,
             loss_fn=loss_fn,
             history=history,
-            verbose=verbose
+            verbose=verbose,
+            is_pretrained=pretrained
         )
         eval_loop(
             dataloader=test_dataloader,
@@ -256,17 +265,20 @@ def main(verbose=False, method=0, pretrained=False):
         if verbose:
             if (t+1) % 20 == 0:
                 heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, tb=tb)
-        
+        if pretrained:
+            suffix = "_transfer"
+        else:
+            suffix = ""
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
-            torch.save(model, model_path + f"epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel.pth")
+            torch.save(model.state_dict(), model_path + f"v2_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
     # heatmap3D(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
     # heatmap3D(model=model, dataset=X_test, dataloader=draw_test_dataloader, device=device)
 
     time_delta = time.time() - start
 
     # save history file
-    np.save(model_path + f"epochs{epochs}_lr_{Lr}_bs_{bs}_history.npy", history)
+    np.save(model_path + f"v2_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
         print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
@@ -299,4 +311,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=False, method=1, pretrained=False)
+    main(verbose=False, method=2, pretrained=True)

@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-08-03 19:48:05
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-08 17:26:04
+LastEditTime: 2022-08-08 19:16:17
 Description: 
 '''
 from cProfile import label
@@ -16,28 +16,28 @@ transfer_history= np.load("savedModel/theoretical/v2_epochs200_lr_0.001_bs_16_hi
 
 plt.figure(figsize=(10,8))
 plt.title('Test Loss')
-plt.plot(random_history['test_loss'], label="random sample")
+# plt.plot(random_history['test_loss'], label="random sample")
 plt.plot(active_history['test_loss'], label="active learning sample")
 plt.plot(theoretical_history['test_loss'], label="theoretical bound sample")
-plt.plot(transfer_history['test_loss'], label="transfer_history sample")
+# plt.plot(transfer_history['test_loss'], label="transfer_history sample")
 plt.legend()
 plt.show()
 
 plt.figure(figsize=(10,8))
 plt.title('Test accuracy')
-plt.plot(random_history['acc_test'], label="random sample")
+# plt.plot(random_history['acc_test'], label="random sample")
 plt.plot(active_history['acc_test'], label="active learning sample")
 plt.plot(theoretical_history['acc_test'], label="theoretical bound sample")
-plt.plot(transfer_history['acc_test'], label="transfer_history sample")
+# plt.plot(transfer_history['acc_test'], label="transfer_history sample")
 plt.legend()
 plt.show()
 
 plt.figure(figsize=(10,8))
 plt.title('Test F1')
-plt.plot(random_history['f1_test'], label="random sample")
+# plt.plot(random_history['f1_test'], label="random sample")
 plt.plot(active_history['f1_test'], label="active learning sample")
 plt.plot(theoretical_history['f1_test'], label="theoretical bound sample")
-plt.plot(transfer_history['f1_test'], label="transfer_historysample")
+# plt.plot(transfer_history['f1_test'], label="transfer_historysample")
 plt.legend()
 plt.show()
 

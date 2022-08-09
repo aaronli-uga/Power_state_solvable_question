@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 22:39:08
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-07-19 13:47:38
+LastEditTime: 2022-08-09 10:22:12
 Description: 
 '''
 #%% Loading data from csv
@@ -18,8 +18,8 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 from collections import Counter
 
-X_csv = "mod_ratio_10k.csv"
-y_csv = "iffeas_10k.csv"
+X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
+y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
 
 df = pd.read_csv(X_csv)
 X = df.to_numpy()

@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-08 18:19:36
+LastEditTime: 2022-08-09 11:49:30
 Description: 
 '''
 #%%
@@ -79,12 +79,12 @@ def main(verbose=False, method=0, pretrained=False):
     # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
 
     # IEEE 118 bus 2d version2
-    X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
-    y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d_v2.csv"
+    # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
+    # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d_v2.csv"
 
     # IEEE 118 bus 3d
-    # X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
-    # y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
+    X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
+    y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
 
     df = pd.read_csv(X_csv)
     X = df.to_numpy()
@@ -157,8 +157,14 @@ def main(verbose=False, method=0, pretrained=False):
     train_data_pool = np.append(X_train, y_train, 1)
     test_data_pool = np.append(X_test, y_test, 1)
 
+   
     # in this case we only test the data in the theoritical bound
-    test_data_pool = removeOutBound(tb=tb, data=test_data_pool)
+    if method == 2:
+        test_data_pool = removeOutBound(tb=tb, data=test_data_pool)
+
+    # plt.hist(train_data_pool[:,1],color='r')
+    # plt.hist(test_data_pool[:,1],color='g')
+
 
     cur_X_test, cur_y_test = test_data_pool[:, 0:num_features], test_data_pool[:, -1].reshape(-1, 1)
     current_data_test = MyLoader(data_root=cur_X_test, data_label=cur_y_test)
@@ -319,4 +325,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=False, method=2, pretrained=True)
+    main(verbose=True, method=1, pretrained=False)

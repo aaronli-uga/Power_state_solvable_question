@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-08 15:27:36
+LastEditTime: 2022-08-10 15:29:01
 Description: 
 '''
 import pandas as pd
@@ -63,6 +63,9 @@ class UncertaintySampling():
 
 def classify_sub(classifier, x_train, y_train, x_test, y_test, cm_file_name, summary_file_name, classifier_name, verbose = True):
     classifier.fit(x_train, y_train)
+    """
+    Machine learning methods helper functions
+    """
     pred = classifier.predict(x_test)
     
     # confusion matrix
@@ -88,6 +91,9 @@ def predict(row, model):
 
 
 def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, tb=None):
+    """
+    Plot the 3D heatmap
+    """
     preds = []
     model.eval()
 
@@ -121,6 +127,9 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
     plt.show()
 
 def heatmap3D(model, dataset, device):
+    """
+    Plot the 3D heatmap
+    """
     preds = []
     model.eval()
     num_of_nodes = 400
@@ -157,6 +166,10 @@ def heatmap3D(model, dataset, device):
     plt.show()
 
 def dataSampling(model, uncertainty_methods, data_pool, device):
+    """
+    sample the data from the data pool based on the uncertainty method. 
+    return the data pool with the uncertainty from high to low.
+    """
     model.eval()
     with torch.no_grad():
         X = data_pool[:, :-1]
@@ -178,7 +191,7 @@ def dataSampling(model, uncertainty_methods, data_pool, device):
 
 def removeOutBound(tb, data):
     """
-    Remove the data not in the theoritical bound
+    Remove the data that are able to be determined by theritical bound
     """
     data = np.delete(data, np.where(
         (data[:,0] >= tb["x1_hi_out"]) |

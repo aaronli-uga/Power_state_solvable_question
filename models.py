@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-18 00:02:08
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-08 15:35:39
+LastEditTime: 2022-08-10 15:50:14
 Description: 
 '''
 from turtle import forward
@@ -15,7 +15,7 @@ from utils import isInBound
 # same structure of the reference active learning paper
 class FNN(nn.Module):
 
-    def __init__(self, n_inputs, tb):
+    def __init__(self, n_inputs):
         """
         tb: theoritical bound
         """
@@ -31,7 +31,6 @@ class FNN(nn.Module):
         # self.tb = tb
     
     def forward(self, input):
-        # if_in_bound = isInBound(tb=self.tb, data=input)
         x = self.relu(self.fc1(input))
         x = self.relu(self.fc2(x))
         x = self.relu(self.fc3(x))

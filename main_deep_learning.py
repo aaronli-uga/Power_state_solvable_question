@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-10 15:17:07
+LastEditTime: 2022-08-10 15:50:35
 Description: 
 '''
 #%%
@@ -141,17 +141,6 @@ def main(verbose=False, method=0, pretrained=False):
             tb[key] = (tb[key] - train_mean[0]) / train_std[0]
         else:
             tb[key] = (tb[key] - train_mean[1]) / train_std[1]
-    
-    # all_data = MyLoader(data_root=X_all, data_label=y)
-    # training_data = MyLoader(data_root=X_train, data_label=y_train)
-    testing_data = MyLoader(data_root=X_test, data_label=y_test)
-
-    # all_dataloader = DataLoader(all_data, batch_size = 1, shuffle = False)
-    # train_dataloader = DataLoader(training_data, batch_size = 64, shuffle = True)
-
-    # global test dataset
-    test_dataloader = DataLoader(testing_data, batch_size = 1024, shuffle = False)
-    # draw_test_dataloader = DataLoader(testing_data, batch_size = 1, shuffle = False)
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)
@@ -162,24 +151,14 @@ def main(verbose=False, method=0, pretrained=False):
     if method == 2:
         test_data_pool = removeOutBound(tb=tb, data=test_data_pool)
 
-    # plt.hist(train_data_pool[:,1],color='r')
-    # plt.hist(test_data_pool[:,1],color='g')
-
 
     cur_X_test, cur_y_test = test_data_pool[:, 0:num_features], test_data_pool[:, -1].reshape(-1, 1)
     current_data_test = MyLoader(data_root=cur_X_test, data_label=cur_y_test)
     test_dataloader = DataLoader(current_data_test, batch_size = 16, shuffle = True)
-    # if method == 2:
-    #     train_data_pool = removeOutBound(tb=tb, data=train_data_pool)
-    #     if verbose:
-    #         plt.title('Data distribution with physical theoritic data boundary')
-    #         plt.scatter(X_all[:,0], X_all[:,1], c=y)
-    #         plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v')
-    #         plt.show()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = FNN(n_inputs=num_features, tb=tb)
+    model = FNN(n_inputs=num_features)
 
     # load the transfered model
     if pretrained:
@@ -214,12 +193,6 @@ def main(verbose=False, method=0, pretrained=False):
             if cnt >= 2 * num_frozen_layers: break
             weights.requires_grad = False
             cnt += 1
-        
-        # The last two layers will be trained
-        # model.fc4.weight.requires_grad = True
-        # model.fc4.bias.requires_grad = True
-        # model.fc5.weight.requires_grad = True
-        # model.fc5.bias.requires_grad = True
         
         params = filter(lambda p: p.requires_grad, model.parameters())
         optimizer = torch.optim.Adam(params, lr=Lr)
@@ -277,14 +250,6 @@ def main(verbose=False, method=0, pretrained=False):
         cur_X_train, cur_y_train = sampled_data_pool[:, 0:num_features], sampled_data_pool[:, -1].reshape(-1, 1)
         current_data = MyLoader(data_root=cur_X_train, data_label=cur_y_train)
         train_dataloader = DataLoader(current_data, batch_size = bs, shuffle = True)
-
-        # plot the sampled data
-        # if verbose:
-        #     plt.figure()
-        #     plt.title('Sampled data plot')
-        #     plt.scatter(X_all[:,0], X_all[:,1], c=y)
-        #     plt.scatter(cur_training_data[:,0], cur_training_data[:,1], c='r', marker="v")
-        #     plt.show()
 
         print('-' * 40)
         train_loop(

@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-10 12:17:34
+LastEditTime: 2022-08-10 15:51:07
 Description: 
 '''
 from curses import mousemask
@@ -52,6 +52,9 @@ def train_loop(trainLoader, model, device, optimizer, lr_scheduler, metric_fn, l
     history['acc_train'].append(metric)
 
 def eval_loop(dataloader, model, epoch, loss_fn, metric_fn, device, history, beta=1.0, verbose=False):
+    """
+    Evaluate the model in batches.
+    """
     num_batches = len(dataloader)
     eval_metric = 0
     loss = 0

@@ -2,8 +2,8 @@
 Author: Qi7
 Date: 2022-08-03 19:48:05
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-08 19:16:17
-Description: 
+LastEditTime: 2022-08-10 15:52:09
+Description: this python file is for plotting the history figure such as the loss and accuracy, F1 score
 '''
 from cProfile import label
 import numpy as np

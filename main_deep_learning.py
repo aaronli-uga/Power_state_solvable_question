@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-09 11:49:30
+LastEditTime: 2022-08-10 12:22:02
 Description: 
 '''
 #%%
@@ -75,16 +75,16 @@ def main(verbose=False, method=0, pretrained=False):
     # y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
 
     # IEEE 118 bus 2d 
-    # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d.csv"
-    # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
+    X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d.csv"
+    y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
 
     # IEEE 118 bus 2d version2
     # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
     # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d_v2.csv"
 
     # IEEE 118 bus 3d
-    X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
-    y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
+    # X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
+    # y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
 
     df = pd.read_csv(X_csv)
     X = df.to_numpy()
@@ -176,7 +176,6 @@ def main(verbose=False, method=0, pretrained=False):
     #         plt.scatter(X_all[:,0], X_all[:,1], c=y)
     #         plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v')
     #         plt.show()
-    
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -190,16 +189,45 @@ def main(verbose=False, method=0, pretrained=False):
     # hyper parameters
     epochs = 200
     Lr = 0.001
+    optimizer_momentum = 0.9
+
+    # parameter for the learning rate scheduler
+    lr_lambda = lambda epoch: 1 ** epoch 
+    # sepcify the scheduler, using LambdaLr in this case. More info: 
+    # https://pytorch.org/docs/stable/optim.html
+    lr_scheduler = torch.optim.lr_scheduler.LambdaLR 
+
     loss_fn = torch.nn.BCELoss()
     metric_fn = accuracy_score
     bs = 16
+    
+    # configure the optimizer for training.
+    if pretrained == False:
+        optimizer = torch.optim.SGD(model.parameters(), lr=Lr, momentum=optimizer_momentum)
+    # if transfer learning is used
+    else:
+        # frozen the layer no need to train
+        for weights in model.parameters():
+            weights.requires_grad = False
+        
+        # The last two layers will be trained
+        model.fc4.weight.requires_grad = True
+        model.fc4.bias.requires_grad = True
+        model.fc5.weight.requires_grad = True
+        model.fc5.bias.requires_grad = True
+        
+        params = filter(lambda p: p.requires_grad, model.parameters())
+        optimizer = torch.optim.Adam(params, lr=Lr)
+
+    scheduler = lr_scheduler(optimizer, lr_lambda=lr_lambda)
+    
 
     summary(model, input_size=(64, 1, num_features), verbose=1)
     history = dict(train_loss=[], test_loss=[], acc_train=[], acc_test=[], f1_train=[], f1_test=[])
     max_loss = 1
     start = time.time()
     for t in range(epochs):
-        print(f"Epoch {t + 1}/{epochs}, learning rate {Lr}")\
+        print(f"Epoch {t + 1}/{epochs}, learning rate {scheduler.get_lr()}")\
         # for first epoch
         if t == 0:
             if verbose: print(f"The initial round, {num_init_samples} numbers of sample have been randomly sampled")
@@ -253,19 +281,21 @@ def main(verbose=False, method=0, pretrained=False):
         #     plt.scatter(cur_training_data[:,0], cur_training_data[:,1], c='r', marker="v")
         #     plt.show()
 
-
         print('-' * 40)
         train_loop(
             trainLoader=train_dataloader, 
             model=model, 
             device=device, 
-            LR=Lr, 
+            optimizer=optimizer, 
+            lr_scheduler=scheduler,
             metric_fn=metric_fn,
             loss_fn=loss_fn,
             history=history,
-            verbose=verbose,
-            is_pretrained=pretrained
+            verbose=verbose
         )
+        # update the learning rate per epoch, if wanna update lr per batch. add this line in train_loop function
+        scheduler.step()
+
         eval_loop(
             dataloader=test_dataloader,
             model=model,
@@ -278,6 +308,7 @@ def main(verbose=False, method=0, pretrained=False):
         )
 
         if verbose:
+            # in this case, print heatmap every 100 iterations
             if (t+1) % 20 == 0:
                 heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, tb=tb)
         if pretrained:
@@ -287,8 +318,6 @@ def main(verbose=False, method=0, pretrained=False):
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
             torch.save(model.state_dict(), model_path + f"v2_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
-    # heatmap3D(model=model, dataset=X_all, dataloader=all_dataloader, device=device)
-    # heatmap3D(model=model, dataset=X_test, dataloader=draw_test_dataloader, device=device)
 
     time_delta = time.time() - start
     print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))

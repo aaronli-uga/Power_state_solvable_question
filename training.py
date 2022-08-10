@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 08:31:52
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-08 17:39:21
+LastEditTime: 2022-08-10 12:17:34
 Description: 
 '''
 from curses import mousemask
@@ -14,27 +14,10 @@ from tqdm import tqdm
 from sklearn.metrics import confusion_matrix, recall_score, f1_score
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, average_precision_score
 
-def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_pretrained = False, momentum=0.9, verbose=False):
-    # num_batches = len(trainLoader)
-    if is_pretrained == False:
-        optimizer = torch.optim.SGD(model.parameters(), lr=LR, momentum=momentum)
-        # optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-    else:
-        # frozen the layer no need to train
-        for weights in model.parameters():
-            weights.requires_grad = False
-        
-        # The last two layers will be trained
-        model.fc4.weight.requires_grad = True
-        model.fc4.bias.requires_grad = True
-        model.fc5.weight.requires_grad = True
-        model.fc5.bias.requires_grad = True
-        
-        params = filter(lambda p: p.requires_grad, model.parameters())
-        optimizer = torch.optim.Adam(params, lr=LR)
-        # optimizer = torch.optim.Adam(params, lr=LR)
-
-    
+def train_loop(trainLoader, model, device, optimizer, lr_scheduler, metric_fn, loss_fn, history, verbose=False):
+    """
+    Training model in batches.
+    """
     model.train()
     data_size = len(trainLoader.dataset)
     for batch, (data_batch, labels) in enumerate(trainLoader):
@@ -50,6 +33,10 @@ def train_loop(trainLoader, model, device, LR, metric_fn, loss_fn, history, is_p
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        # uncomment this if wanna update the learning rate per batch
+        # lr_scheduler.step()
+
         loss = loss.item()
         if batch % 5 == 0:
             current = batch * len(data_batch)

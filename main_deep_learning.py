@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-10 12:22:02
+LastEditTime: 2022-08-10 15:17:07
 Description: 
 '''
 #%%
@@ -190,6 +190,8 @@ def main(verbose=False, method=0, pretrained=False):
     epochs = 200
     Lr = 0.001
     optimizer_momentum = 0.9
+    if pretrained:
+        num_frozen_layers = 3 # the number of layers to be frozen
 
     # parameter for the learning rate scheduler
     lr_lambda = lambda epoch: 1 ** epoch 
@@ -207,14 +209,17 @@ def main(verbose=False, method=0, pretrained=False):
     # if transfer learning is used
     else:
         # frozen the layer no need to train
+        cnt = 0
         for weights in model.parameters():
+            if cnt >= 2 * num_frozen_layers: break
             weights.requires_grad = False
+            cnt += 1
         
         # The last two layers will be trained
-        model.fc4.weight.requires_grad = True
-        model.fc4.bias.requires_grad = True
-        model.fc5.weight.requires_grad = True
-        model.fc5.bias.requires_grad = True
+        # model.fc4.weight.requires_grad = True
+        # model.fc4.bias.requires_grad = True
+        # model.fc5.weight.requires_grad = True
+        # model.fc5.bias.requires_grad = True
         
         params = filter(lambda p: p.requires_grad, model.parameters())
         optimizer = torch.optim.Adam(params, lr=Lr)
@@ -354,4 +359,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=True, method=1, pretrained=False)
+    main(verbose=True, method=1, pretrained=True)

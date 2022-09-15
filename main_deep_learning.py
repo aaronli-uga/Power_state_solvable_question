@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-10 15:50:35
+LastEditTime: 2022-09-13 13:50:05
 Description: 
 '''
 #%%
@@ -75,8 +75,8 @@ def main(verbose=False, method=0, pretrained=False):
     # y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
 
     # IEEE 118 bus 2d 
-    X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d.csv"
-    y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
+    # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d.csv"
+    # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
 
     # IEEE 118 bus 2d version2
     # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
@@ -85,6 +85,10 @@ def main(verbose=False, method=0, pretrained=False):
     # IEEE 118 bus 3d
     # X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
     # y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
+    
+    # flexibility 2d
+    X_csv = "dataset/flexibility/2d/2d_ratio_1.csv"
+    y_csv = "dataset/flexibility/2d/2d_isfeas_1.csv"
 
     df = pd.read_csv(X_csv)
     X = df.to_numpy()
@@ -324,4 +328,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=True, method=1, pretrained=True)
+    main(verbose=True, method=1, pretrained=False)

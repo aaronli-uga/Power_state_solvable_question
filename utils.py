@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-08-10 15:29:01
+LastEditTime: 2022-10-05 12:54:23
 Description: 
 '''
 import pandas as pd
@@ -90,7 +90,7 @@ def predict(row, model):
     return yhat
 
 
-def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, tb=None):
+def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, path, tb=None):
     """
     Plot the 3D heatmap
     """
@@ -110,11 +110,16 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
     feature_1 = dataset[:,0]
     feature_2 = dataset[:,1]
     # draw the heatmap 
-    plt.figure()
-    plt.title(f"uncertainty heatmap (Epoch: {epoch})")
-    plt.scatter(feature_1, feature_2, c=preds, cmap="coolwarm")
-    plt.colorbar()
-    plt.scatter(sampled_data[:,0], sampled_data[:,1], c='g', marker="v")
+    plt.figure(figsize=(19,16))
+    plt.title(f"uncertainty heatmap (Epoch: {epoch})", fontsize=30)
+    plt.scatter(feature_1, feature_2, c=preds, cmap="coolwarm", vmax=1, vmin=0)
+    plt.xlabel("feature 1", fontsize=16)
+    plt.ylabel("feature 2", fontsize=16)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    cb = plt.colorbar()
+    cb.ax.tick_params(labelsize=40)
+    plt.scatter(sampled_data[:,0], sampled_data[:,1], c='g', marker="v", s=[1500])
     if tb != None and method == 2:
         plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
         plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
@@ -124,7 +129,10 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
         plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
         plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
         plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-    plt.show()
+    plt.savefig(path + f'epoch_{epoch}',dpi=70)
+    plt.close()
+    # plt.show()
+    # plt.savefig(path+f'_epoch_{epoch}',dpi=20)
 
 def heatmap3D(model, dataset, device):
     """

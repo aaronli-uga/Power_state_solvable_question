@@ -2,10 +2,11 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-09-13 13:50:05
+LastEditTime: 2022-10-05 22:15:12
 Description: 
 '''
 #%%
+from email import header
 import os
 import numpy as np
 import time
@@ -15,7 +16,7 @@ import warnings
 from torch.utils.data import DataLoader
 from dataloaders import MyLoader
 from torchinfo import summary
-from models import FNN
+from models import FNN, FNN_4d
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, recall_score, f1_score
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, average_precision_score
@@ -36,7 +37,14 @@ def main(verbose=False, method=0, pretrained=False):
     2-active learning with physical information
     
     if pretrained = True, transfer learning is being used.
-
+    
+    Formula for ratio to samples:
+    value = r * u + (1 - r) * ell
+    
+    r: ratio
+    sample upper bound: u
+    sample lower bound: ell
+    
     """
     if method == 0:
         model_path = "savedModel/random_sample/"
@@ -46,7 +54,8 @@ def main(verbose=False, method=0, pretrained=False):
         model_path = "savedModel/theoretical/"
 
     if pretrained:
-        trained_model = "savedModel/active_learning/epochs200_lr_0.001_bs_16_bestmodel.pth"
+        # trained_model = "savedModel/active_learning/4d_1_epochs200_lr_0.001_bs_16_bestmodel.pth"
+        trained_model = "savedModel/active_learning/4d_1_epochs200_lr_0.001_bs_16_bestmodel.pth"
         
     if os.path.isdir(model_path) == False:
         os.makedirs(model_path)
@@ -54,22 +63,26 @@ def main(verbose=False, method=0, pretrained=False):
     # theoretical_bound
     tb = None
     # if method:
-    if verbose: print("configure the physical information for active learning")
-    tb = {
-        "x1_hi_out": 20,
-        "x1_lo_out": -20,
-        "x2_hi_out": 20,
-        "x2_lo_out": -20,
-        "x1_hi_in": 7,
-        "x1_lo_in": -2,
-        "x2_hi_in": 3,
-        "x2_lo_in": -5
-    }
+    # if verbose: print("configure the physical information for active learning")
+    # tb = {
+    #     "x1_hi_out": 20,
+    #     "x1_lo_out": -20,
+    #     "x2_hi_out": 20,
+    #     "x2_lo_out": -20,
+    #     "x1_hi_in": 7,
+    #     "x1_lo_in": -2,
+    #     "x2_hi_in": 3,
+    #     "x2_lo_in": -5
+    # }
+    
+    # upper_bound = [8.2943, 7.0779]
+    # lower_bound = [-0.6839, 2.0639]
 
     # define the uncertainty methods
     sampler = UncertaintySampling()
     sample_method = sampler.least_confidence
     
+    # The following specify the dataset
     # IEEE 39 bus
     # X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
     # y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
@@ -87,30 +100,83 @@ def main(verbose=False, method=0, pretrained=False):
     # y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
     
     # flexibility 2d
-    X_csv = "dataset/flexibility/2d/2d_ratio_1.csv"
-    y_csv = "dataset/flexibility/2d/2d_isfeas_1.csv"
-
-    df = pd.read_csv(X_csv)
-    X = df.to_numpy()
-    df = pd.read_csv(y_csv)
-    y = df.to_numpy()
-
+    # X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
+    # y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
+    fig_path = "savedModel/active_learning/no_transfer_figs/"
+    
+    # flexibility 4d
+    X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
+    y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
+    sample_upper_bound = "dataset/flexibility/2d/2d_upper_2.csv"
+    sample_lower_bound = "dataset/flexibility/2d/2d_lower_2.csv"
+    theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_2.csv"
+    theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_2.csv"
+    
+    
+    df_x = pd.read_csv(X_csv, header=None)
+    # X = df.to_numpy()
+    df_y = pd.read_csv(y_csv, header=None)
+    # y = df.to_numpy()
+    upper = pd.read_csv(sample_upper_bound, header=None)
+    lower = pd.read_csv(sample_lower_bound, header=None)
+    theory_upper = pd.read_csv(theory_upper_bound, header=None)
+    theory_lower = pd.read_csv(theory_lower_bound, header=None)
+    
+    # solve data unbalance problem for 4-dimensional case
+    
+    # cat_df = pd.concat([df_x, df_y], axis=1)
+    # cat_df.columns = ['x1','x2','x3','x4','y']
+    # print(cat_df["y"].value_counts())
+    
+    # # shuffle the dataframe
+    # cat_df = cat_df.sample(frac=1, random_state=1)
+    # cat_df.drop(cat_df[cat_df["y"] == 0].index[:25000], inplace=True)
+    
+    # X = cat_df[['x1','x2','x3','x4']].to_numpy()
+    # y = cat_df["y"].to_numpy().reshape(-1,1)
+    X1_u = upper[0][0]
+    X2_u = upper[0][1]
+    
+    x1_tu = theory_upper[0][0]
+    x2_tu = theory_upper[0][1]
+    
+    X1_l = lower[0][0]
+    X2_l = lower[0][1]
+    
+    x1_tl = theory_lower[0][0]
+    x2_tl = theory_lower[0][1]
+    
+    X = df_x.to_numpy()
+    y = df_y.to_numpy()
+    
+    X[:,0] = X[:,0] * X1_u + (1 - X[:,0]) * X1_l
+    X[:,1] = X[:,1] * X2_u + (1 - X[:,1]) * X2_l
+    
+    # value = r * u + (1 - r) * ell
+    
     # plot the figure of raw data distribution
     if verbose:
         plt.figure()
         plt.title('Raw data distribution')
         plt.scatter(X[:,0], X[:,1],c=y)
+        
+        # plot theoretical bound
+        plt.plot()
+        plt.plot([x1_tl, x1_tu], [x2_tl, x2_tl], c='r', linewidth=5)
+        plt.plot([x1_tl, x1_tu], [x2_tu, x2_tu], c='r', linewidth=5)
+        plt.plot([x1_tl, x1_tl], [x2_tl, x2_tu], c='r', linewidth=5)
+        plt.plot([x1_tu, x1_tu], [x2_tl, x2_tu], c='r', linewidth=5)
 
         # plot the physical boundary
-        if method == 2:
-            plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
-            plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-            plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-            plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-            plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
-            plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-            plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-            plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+        # if method == 2:
+        #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
+        #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+        #     plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+        #     plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+        #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
+        #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+        #     plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+        #     plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
         plt.show()
 
     #%% preprocessing
@@ -138,13 +204,29 @@ def main(verbose=False, method=0, pretrained=False):
     X_train = (X_train - train_mean) / train_std
     X_test = (X_test - train_mean) / train_std
     
+    # Theoritical bound 
+    # upper_bound = (upper_bound - train_mean) / train_std
+    # lower_bound = (lower_bound - train_mean) / train_std
+
+    # print(f"upper_bound: {upper_bound}, lower_bound: {lower_bound}")
+    # exit()
+    # plt.figure()
+    # plt.title('Raw data distribution', fontsize=30)
+    # plt.scatter(X_all[:,0], X_all[:,1],c=y)
+    # plt.xlabel("feature 1", fontsize=18)
+    # plt.ylabel("feature 2", fontsize=18)
+    # plt.xticks(fontsize=16)
+    # plt.yticks(fontsize=16)
+    # plt.show()
+
+
     # normalize the physical boundary
-    # if method 2:
-    for key in tb:
-        if "x1" in key:
-            tb[key] = (tb[key] - train_mean[0]) / train_std[0]
-        else:
-            tb[key] = (tb[key] - train_mean[1]) / train_std[1]
+    if method == 2:
+        for key in tb:
+            if "x1" in key:
+                tb[key] = (tb[key] - train_mean[0]) / train_std[0]
+            else:
+                tb[key] = (tb[key] - train_mean[1]) / train_std[1]
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)
@@ -188,7 +270,8 @@ def main(verbose=False, method=0, pretrained=False):
     
     # configure the optimizer for training.
     if pretrained == False:
-        optimizer = torch.optim.SGD(model.parameters(), lr=Lr, momentum=optimizer_momentum)
+        # optimizer = torch.optim.SGD(model.parameters(), lr=Lr, momentum=optimizer_momentum)
+        optimizer = torch.optim.Adam(model.parameters(), lr=Lr)
     # if transfer learning is used
     else:
         # frozen the layer no need to train
@@ -283,21 +366,21 @@ def main(verbose=False, method=0, pretrained=False):
 
         if verbose:
             # in this case, print heatmap every 100 iterations
-            if (t+1) % 20 == 0:
-                heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, tb=tb)
+            if (t+1) % 5 == 0:
+                heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, path=fig_path, tb=tb)
         if pretrained:
             suffix = "_transfer"
         else:
             suffix = ""
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
-            torch.save(model.state_dict(), model_path + f"v2_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
+            torch.save(model.state_dict(), model_path + f"4d_7_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
 
     time_delta = time.time() - start
     print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
     # save history file
-    np.save(model_path + f"v2_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
+    np.save(model_path + f"4d_7_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
         #%%
@@ -321,10 +404,10 @@ def main(verbose=False, method=0, pretrained=False):
         plt.plot(history['acc_test'])
         plt.show()
 
-        plt.figure(figsize=(10,8))
-        plt.title('Test F1')
-        plt.plot(history['f1_test'])
-        plt.show()
+    plt.figure(figsize=(10,8))
+    plt.title('Test F1')
+    plt.plot(history['f1_test'])
+    plt.show()
     # %%
 
 if __name__ == '__main__':

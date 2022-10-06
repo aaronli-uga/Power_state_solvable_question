@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-05 22:15:12
+LastEditTime: 2022-10-06 00:15:39
 Description: 
 '''
 #%%
@@ -102,7 +102,9 @@ def main(verbose=False, method=0, pretrained=False):
     # flexibility 2d
     # X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
     # y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
-    fig_path = "savedModel/active_learning/no_transfer_figs/"
+    # fig_path = "savedModel/active_learning/no_transfer_figs/"
+    # fig_path = "savedModel/random_sample/figs/"
+    fig_path = "savedModel/active_learning/figs/"
     
     # flexibility 4d
     X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
@@ -156,7 +158,7 @@ def main(verbose=False, method=0, pretrained=False):
     
     # plot the figure of raw data distribution
     if verbose:
-        plt.figure()
+        plt.figure(figsize=(19, 16))
         plt.title('Raw data distribution')
         plt.scatter(X[:,0], X[:,1],c=y)
         
@@ -177,6 +179,7 @@ def main(verbose=False, method=0, pretrained=False):
         #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
         #     plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
         #     plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+        plt.savefig(fig_path + "raw_distribution")
         plt.show()
 
     #%% preprocessing
@@ -205,20 +208,26 @@ def main(verbose=False, method=0, pretrained=False):
     X_test = (X_test - train_mean) / train_std
     
     # Theoritical bound 
-    # upper_bound = (upper_bound - train_mean) / train_std
-    # lower_bound = (lower_bound - train_mean) / train_std
+    upper_bound = [x1_tu, x2_tu]
+    lower_bound = [x1_tl, x2_tl]
+    upper_bound = (upper_bound - train_mean) / train_std
+    lower_bound = (lower_bound - train_mean) / train_std
 
     # print(f"upper_bound: {upper_bound}, lower_bound: {lower_bound}")
     # exit()
-    # plt.figure()
-    # plt.title('Raw data distribution', fontsize=30)
-    # plt.scatter(X_all[:,0], X_all[:,1],c=y)
-    # plt.xlabel("feature 1", fontsize=18)
-    # plt.ylabel("feature 2", fontsize=18)
-    # plt.xticks(fontsize=16)
-    # plt.yticks(fontsize=16)
-    # plt.show()
-
+    plt.figure(figsize=(19, 16))
+    plt.title('Raw data distribution (normalized)', fontsize=30)
+    plt.scatter(X_all[:,0], X_all[:,1],c=y)
+    plt.xlabel("feature 1", fontsize=18)
+    plt.ylabel("feature 2", fontsize=18)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
+    plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
+    plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+    plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+    plt.savefig(fig_path + "raw_distribution_normalized")
+    plt.show()
 
     # normalize the physical boundary
     if method == 2:
@@ -367,20 +376,20 @@ def main(verbose=False, method=0, pretrained=False):
         if verbose:
             # in this case, print heatmap every 100 iterations
             if (t+1) % 5 == 0:
-                heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, path=fig_path, tb=tb)
+                heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, path=fig_path, lb=lower_bound, ub=upper_bound ,tb=tb)
         if pretrained:
             suffix = "_transfer"
         else:
             suffix = ""
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
-            torch.save(model.state_dict(), model_path + f"4d_7_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
+            torch.save(model.state_dict(), model_path + f"2d_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
 
     time_delta = time.time() - start
     print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
     # save history file
-    np.save(model_path + f"4d_7_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
+    np.save(model_path + f"2d_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
         #%%

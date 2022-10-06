@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-05 12:54:23
+LastEditTime: 2022-10-06 00:05:46
 Description: 
 '''
 import pandas as pd
@@ -90,7 +90,7 @@ def predict(row, model):
     return yhat
 
 
-def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, path, tb=None):
+def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, path, lb, ub, tb=None):
     """
     Plot the 3D heatmap
     """
@@ -120,6 +120,11 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=40)
     plt.scatter(sampled_data[:,0], sampled_data[:,1], c='g', marker="v", s=[1500])
+    plt.plot([lb[0], ub[0]], [lb[1], lb[1]], c='y', linewidth=10)
+    plt.plot([lb[0], ub[0]], [ub[1], ub[1]], c='y', linewidth=10)
+    plt.plot([lb[0], lb[0]], [lb[1], ub[1]], c='y', linewidth=10)
+    plt.plot([ub[0], ub[0]], [lb[1], ub[1]], c='y', linewidth=10)
+    
     if tb != None and method == 2:
         plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
         plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)

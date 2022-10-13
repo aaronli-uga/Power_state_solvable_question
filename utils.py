@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-06 00:05:46
+LastEditTime: 2022-10-13 16:54:19
 Description: 
 '''
 import pandas as pd
@@ -90,17 +90,22 @@ def predict(row, model):
     return yhat
 
 
-def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, path, lb, ub, tb=None):
+def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, path, lb, ub, verbose, tb=None):
     """
-    Plot the 3D heatmap
+    Plot the 2D heatmap
     """
     preds = []
     model.eval()
 
     with torch.no_grad():
         X = torch.from_numpy(dataset)
+            
         X = X.to(device, dtype=torch.float)
         preds = model(X)
+        if tb!= None and method == 2:
+            # The index specifies the 
+            tb_index = (X[:,0] <= tb["x1_hi"]) & (X[:,0] >= tb["x1_lo"]) & (X[:,1] <= tb["x2_hi"]) & (X[:,1] >= tb["x2_lo"])
+            preds[tb_index] = 1
         preds = preds.detach().cpu().numpy()
     
     preds = preds.flatten()
@@ -125,17 +130,21 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
     plt.plot([lb[0], lb[0]], [lb[1], ub[1]], c='y', linewidth=10)
     plt.plot([ub[0], ub[0]], [lb[1], ub[1]], c='y', linewidth=10)
     
-    if tb != None and method == 2:
-        plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
-        plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-        plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-        plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-        plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
-        plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-        plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-        plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+    # if tb != None and method == 2:
+    #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
+    #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+    #     plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+    #     plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
+    #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
+    #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+    #     plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
+    #     plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
     plt.savefig(path + f'epoch_{epoch}',dpi=70)
-    plt.close()
+    if verbose:
+        plt.show()
+    else:
+        plt.close()
+    # plt.close()
     # plt.show()
     # plt.savefig(path+f'_epoch_{epoch}',dpi=20)
 
@@ -206,13 +215,17 @@ def removeOutBound(tb, data):
     """
     Remove the data that are able to be determined by theritical bound
     """
+    # data = np.delete(data, np.where(
+    #     (data[:,0] >= tb["x1_hi_out"]) |
+    #     (data[:,0] <= tb["x1_lo_out"]) |
+    #     (data[:,1] >= tb["x2_hi_out"]) |
+    #     (data[:,1] <= tb["x2_lo_out"]) |
+    #     ((data[:,0] <= tb["x1_hi_in"]) & (data[:,0] >= tb["x1_lo_in"]) & (data[:,1] <= tb["x2_hi_in"]) & (data[:,1] >= tb["x2_lo_in"]))
+    # )[0], axis=0)
     data = np.delete(data, np.where(
-        (data[:,0] >= tb["x1_hi_out"]) |
-        (data[:,0] <= tb["x1_lo_out"]) |
-        (data[:,1] >= tb["x2_hi_out"]) |
-        (data[:,1] <= tb["x2_lo_out"]) |
-        ((data[:,0] <= tb["x1_hi_in"]) & (data[:,0] >= tb["x1_lo_in"]) & (data[:,1] <= tb["x2_hi_in"]) & (data[:,1] >= tb["x2_lo_in"]))
+        ((data[:,0] <= tb["x1_hi"]) & (data[:,0] >= tb["x1_lo"]) & (data[:,1] <= tb["x2_hi"]) & (data[:,1] >= tb["x2_lo"]))
     )[0], axis=0)
+    
     return data
 
 def isInBound(tb, data) -> bool:

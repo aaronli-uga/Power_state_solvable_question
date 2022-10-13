@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-06 00:15:39
+LastEditTime: 2022-10-13 09:58:43
 Description: 
 '''
 #%%
@@ -53,6 +53,7 @@ def main(verbose=False, method=0, pretrained=False):
     elif method == 2:
         model_path = "savedModel/theoretical/"
 
+    # if transfer learning is enabled, load the pretrained model as the backbone
     if pretrained:
         # trained_model = "savedModel/active_learning/4d_1_epochs200_lr_0.001_bs_16_bestmodel.pth"
         trained_model = "savedModel/active_learning/4d_1_epochs200_lr_0.001_bs_16_bestmodel.pth"
@@ -60,53 +61,12 @@ def main(verbose=False, method=0, pretrained=False):
     if os.path.isdir(model_path) == False:
         os.makedirs(model_path)
     
-    # theoretical_bound
-    tb = None
-    # if method:
-    # if verbose: print("configure the physical information for active learning")
-    # tb = {
-    #     "x1_hi_out": 20,
-    #     "x1_lo_out": -20,
-    #     "x2_hi_out": 20,
-    #     "x2_lo_out": -20,
-    #     "x1_hi_in": 7,
-    #     "x1_lo_in": -2,
-    #     "x2_hi_in": 3,
-    #     "x2_lo_in": -5
-    # }
-    
-    # upper_bound = [8.2943, 7.0779]
-    # lower_bound = [-0.6839, 2.0639]
-
     # define the uncertainty methods
     sampler = UncertaintySampling()
     sample_method = sampler.least_confidence
     
     # The following specify the dataset
-    # IEEE 39 bus
-    # X_csv = "dataset/IEEE_39_bus/mod_ratio_10k.csv"
-    # y_csv = "dataset/IEEE_39_bus/iffeas_10k.csv"
-
-    # IEEE 118 bus 2d 
-    # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d.csv"
-    # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d.csv"
-
-    # IEEE 118 bus 2d version2
-    # X_csv = "dataset/IEEE_118_bus/mod_ratio_10k_2d_v2.csv"
-    # y_csv = "dataset/IEEE_118_bus/iffeas_10k_2d_v2.csv"
-
-    # IEEE 118 bus 3d
-    # X_csv = "dataset/IEEE_118_bus/mod_ratio_20k_3d.csv"
-    # y_csv = "dataset/IEEE_118_bus/iffeas_20k_3d.csv"
     
-    # flexibility 2d
-    # X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
-    # y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
-    # fig_path = "savedModel/active_learning/no_transfer_figs/"
-    # fig_path = "savedModel/random_sample/figs/"
-    fig_path = "savedModel/active_learning/figs/"
-    
-    # flexibility 4d
     X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
     y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
     sample_upper_bound = "dataset/flexibility/2d/2d_upper_2.csv"
@@ -114,6 +74,10 @@ def main(verbose=False, method=0, pretrained=False):
     theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_2.csv"
     theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_2.csv"
     
+    # The following specifies the path to save the output figures
+    # fig_path = "savedModel/active_learning/no_transfer_figs/"
+    # fig_path = "savedModel/random_sample/figs/"
+    fig_path = "savedModel/active_learning/figs/"
     
     df_x = pd.read_csv(X_csv, header=None)
     # X = df.to_numpy()
@@ -124,7 +88,9 @@ def main(verbose=False, method=0, pretrained=False):
     theory_upper = pd.read_csv(theory_upper_bound, header=None)
     theory_lower = pd.read_csv(theory_lower_bound, header=None)
     
-    # solve data unbalance problem for 4-dimensional case
+    # solve data unbalance problem for 4-dimensional case:
+    
+    # num_of_remove = 25000 # the number of samples being removed for solving the unbalance issues
     
     # cat_df = pd.concat([df_x, df_y], axis=1)
     # cat_df.columns = ['x1','x2','x3','x4','y']
@@ -132,10 +98,11 @@ def main(verbose=False, method=0, pretrained=False):
     
     # # shuffle the dataframe
     # cat_df = cat_df.sample(frac=1, random_state=1)
-    # cat_df.drop(cat_df[cat_df["y"] == 0].index[:25000], inplace=True)
+    # cat_df.drop(cat_df[cat_df["y"] == 0].index[:num_of_remove], inplace=True)
     
     # X = cat_df[['x1','x2','x3','x4']].to_numpy()
     # y = cat_df["y"].to_numpy().reshape(-1,1)
+    
     X1_u = upper[0][0]
     X2_u = upper[0][1]
     
@@ -151,10 +118,11 @@ def main(verbose=False, method=0, pretrained=False):
     X = df_x.to_numpy()
     y = df_y.to_numpy()
     
+    # The formula to retrieve the actual value:
+    # value = r * u + (1 - r) * ell
     X[:,0] = X[:,0] * X1_u + (1 - X[:,0]) * X1_l
     X[:,1] = X[:,1] * X2_u + (1 - X[:,1]) * X2_l
     
-    # value = r * u + (1 - r) * ell
     
     # plot the figure of raw data distribution
     if verbose:
@@ -168,22 +136,10 @@ def main(verbose=False, method=0, pretrained=False):
         plt.plot([x1_tl, x1_tu], [x2_tu, x2_tu], c='r', linewidth=5)
         plt.plot([x1_tl, x1_tl], [x2_tl, x2_tu], c='r', linewidth=5)
         plt.plot([x1_tu, x1_tu], [x2_tl, x2_tu], c='r', linewidth=5)
-
-        # plot the physical boundary
-        # if method == 2:
-        #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
-        #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-        #     plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-        #     plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-        #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
-        #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-        #     plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-        #     plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
         plt.savefig(fig_path + "raw_distribution")
         plt.show()
 
     #%% preprocessing
-
     # The number of samples for the initial training.
     num_init_samples = 100
 
@@ -192,29 +148,36 @@ def main(verbose=False, method=0, pretrained=False):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=23)
 
-    # number of input features
+    # Number of input features
     num_features = X_train.shape[1]
 
-    # the data pool with data has been sampled (features + label)
+    # The data pool with data has been sampled (features + label)
     sampled_data_pool = np.empty((0, X_train.shape[1]+1))
 
     train_mean = X_train.mean(axis=0)
     train_std = X_train.std(axis=0)
 
-
-    # data normalization
+    # Feature data normalization
     X_all = (X - train_mean) / train_std
     X_train = (X_train - train_mean) / train_std
     X_test = (X_test - train_mean) / train_std
     
-    # Theoritical bound 
+    # Theoritical bound normalization
     upper_bound = [x1_tu, x2_tu]
     lower_bound = [x1_tl, x2_tl]
     upper_bound = (upper_bound - train_mean) / train_std
     lower_bound = (lower_bound - train_mean) / train_std
+    
+    # theoretical_bound
+    tb = None
+    if method == 2:
+        tb = {
+            "x1_hi": upper_bound[0],
+            "x1_lo": lower_bound[0],
+            "x2_hi": upper_bound[1],
+            "x2_lo": lower_bound[1]
+        }
 
-    # print(f"upper_bound: {upper_bound}, lower_bound: {lower_bound}")
-    # exit()
     plt.figure(figsize=(19, 16))
     plt.title('Raw data distribution (normalized)', fontsize=30)
     plt.scatter(X_all[:,0], X_all[:,1],c=y)
@@ -229,13 +192,6 @@ def main(verbose=False, method=0, pretrained=False):
     plt.savefig(fig_path + "raw_distribution_normalized")
     plt.show()
 
-    # normalize the physical boundary
-    if method == 2:
-        for key in tb:
-            if "x1" in key:
-                tb[key] = (tb[key] - train_mean[0]) / train_std[0]
-            else:
-                tb[key] = (tb[key] - train_mean[1]) / train_std[1]
 
     # Current data pool for sampling
     train_data_pool = np.append(X_train, y_train, 1)

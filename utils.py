@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-13 22:25:39
+LastEditTime: 2022-10-14 13:54:48
 Description: 
 '''
 import pandas as pd
@@ -125,10 +125,10 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=40)
     plt.scatter(sampled_data[:,0], sampled_data[:,1], c='g', marker="v", s=[1500])
-    plt.plot([lb[0], ub[0]], [lb[1], lb[1]], c='y', linewidth=10)
-    plt.plot([lb[0], ub[0]], [ub[1], ub[1]], c='y', linewidth=10)
-    plt.plot([lb[0], lb[0]], [lb[1], ub[1]], c='y', linewidth=10)
-    plt.plot([ub[0], ub[0]], [lb[1], ub[1]], c='y', linewidth=10)
+    plt.plot([lb[0], ub[0]], [lb[1], lb[1]], c='y', linewidth=20)
+    plt.plot([lb[0], ub[0]], [ub[1], ub[1]], c='y', linewidth=20)
+    plt.plot([lb[0], lb[0]], [lb[1], ub[1]], c='y', linewidth=20)
+    plt.plot([ub[0], ub[0]], [lb[1], ub[1]], c='y', linewidth=20)
     
     if method == 0:
         plot_true_bound()
@@ -251,9 +251,9 @@ def plot_true_bound():
     true_x1_6, true_x2_6 = -1.265, -0.561
     
         # plot true boundary
-    plt.plot([true_x1_1, true_x1_2], [true_x2_1, true_x2_2], c='g', linewidth=10)
-    plt.plot([true_x1_2, true_x1_3], [true_x2_2, true_x2_3], c='g', linewidth=10)
-    plt.plot([true_x1_3, true_x1_4], [true_x2_3, true_x2_4], c='g', linewidth=10)
-    plt.plot([true_x1_4, true_x1_5], [true_x2_4, true_x2_5], c='g', linewidth=10)
-    plt.plot([true_x1_5, true_x1_6], [true_x2_5, true_x2_6], c='g', linewidth=10)
-    plt.plot([true_x1_6, true_x1_1], [true_x2_6, true_x2_1], c='g', linewidth=10)
+    plt.plot([true_x1_1, true_x1_2], [true_x2_1, true_x2_2], c='g', linewidth=20)
+    plt.plot([true_x1_2, true_x1_3], [true_x2_2, true_x2_3], c='g', linewidth=20)
+    plt.plot([true_x1_3, true_x1_4], [true_x2_3, true_x2_4], c='g', linewidth=20)
+    plt.plot([true_x1_4, true_x1_5], [true_x2_4, true_x2_5], c='g', linewidth=20)
+    plt.plot([true_x1_5, true_x1_6], [true_x2_5, true_x2_6], c='g', linewidth=20)
+    plt.plot([true_x1_6, true_x1_1], [true_x2_6, true_x2_1], c='g', linewidth=20)

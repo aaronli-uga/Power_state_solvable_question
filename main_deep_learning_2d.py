@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-13 22:25:57
+LastEditTime: 2022-10-14 14:54:38
 Description: 
 '''
 #%%
@@ -80,12 +80,12 @@ def main(verbose=False, method=0, pretrained=False):
     sample_method = sampler.least_confidence
     
     # Specify the dataset
-    X_csv = "dataset/flexibility/2d/2d_ratio_1.csv"
-    y_csv = "dataset/flexibility/2d/2d_isfeas_1.csv"
-    sample_upper_bound = "dataset/flexibility/2d/2d_upper_1.csv"
-    sample_lower_bound = "dataset/flexibility/2d/2d_lower_1.csv"
-    theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_1.csv"
-    theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_1.csv"
+    X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
+    y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
+    sample_upper_bound = "dataset/flexibility/2d/2d_upper_2.csv"
+    sample_lower_bound = "dataset/flexibility/2d/2d_lower_2.csv"
+    theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_2.csv"
+    theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_2.csv"
     
     df_x = pd.read_csv(X_csv, header=None)
     df_y = pd.read_csv(y_csv, header=None)

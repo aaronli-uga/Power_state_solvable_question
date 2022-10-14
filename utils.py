@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-13 16:54:19
+LastEditTime: 2022-10-13 22:25:39
 Description: 
 '''
 import pandas as pd
@@ -90,7 +90,7 @@ def predict(row, model):
     return yhat
 
 
-def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, path, lb, ub, verbose, tb=None):
+def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, method, path, lb, ub, verbose, pretrained, tb=None):
     """
     Plot the 2D heatmap
     """
@@ -130,16 +130,16 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
     plt.plot([lb[0], lb[0]], [lb[1], ub[1]], c='y', linewidth=10)
     plt.plot([ub[0], ub[0]], [lb[1], ub[1]], c='y', linewidth=10)
     
-    # if tb != None and method == 2:
-    #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_lo_out"]], c='r', linewidth=5)
-    #     plt.plot([tb["x1_lo_out"], tb["x1_hi_out"]], [tb["x2_hi_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-    #     plt.plot([tb["x1_lo_out"], tb["x1_lo_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-    #     plt.plot([tb["x1_hi_out"], tb["x1_hi_out"]], [tb["x2_lo_out"], tb["x2_hi_out"]], c='r', linewidth=5)
-    #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_lo_in"]], c='r', linewidth=5)
-    #     plt.plot([tb["x1_lo_in"], tb["x1_hi_in"]], [tb["x2_hi_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-    #     plt.plot([tb["x1_lo_in"], tb["x1_lo_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-    #     plt.plot([tb["x1_hi_in"], tb["x1_hi_in"]], [tb["x2_lo_in"], tb["x2_hi_in"]], c='r', linewidth=5)
-    plt.savefig(path + f'epoch_{epoch}',dpi=70)
+    if method == 0:
+        plot_true_bound()
+    
+    
+    if pretrained:
+        fig_name = path + f'epoch_{epoch}_transfer'
+    else:
+        fig_name = path + f'epoch_{epoch}'
+    
+    plt.savefig(fig_name, dpi=70)
     if verbose:
         plt.show()
     else:
@@ -240,3 +240,20 @@ def isInBound(tb, data) -> bool:
         return 1
     else:
         return False
+
+def plot_true_bound():
+    # hardcode (by sampling the position of the truth label from the plot figure) the truth boundary of the second case for visualization:
+    true_x1_1, true_x2_1 = -1.265, 0.688
+    true_x1_2, true_x2_2 = -0.012, 0.688
+    true_x1_3, true_x2_3 = 0.342, 0.355
+    true_x1_4, true_x2_4 = 0.342, -1.059
+    true_x1_5, true_x2_5 = -0.781, -1.059
+    true_x1_6, true_x2_6 = -1.265, -0.561
+    
+        # plot true boundary
+    plt.plot([true_x1_1, true_x1_2], [true_x2_1, true_x2_2], c='g', linewidth=10)
+    plt.plot([true_x1_2, true_x1_3], [true_x2_2, true_x2_3], c='g', linewidth=10)
+    plt.plot([true_x1_3, true_x1_4], [true_x2_3, true_x2_4], c='g', linewidth=10)
+    plt.plot([true_x1_4, true_x1_5], [true_x2_4, true_x2_5], c='g', linewidth=10)
+    plt.plot([true_x1_5, true_x1_6], [true_x2_5, true_x2_6], c='g', linewidth=10)
+    plt.plot([true_x1_6, true_x1_1], [true_x2_6, true_x2_1], c='g', linewidth=10)

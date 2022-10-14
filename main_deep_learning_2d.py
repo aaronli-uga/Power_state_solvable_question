@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-13 16:54:35
+LastEditTime: 2022-10-13 22:25:57
 Description: 
 '''
 #%%
@@ -24,7 +24,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, aver
 from matplotlib import pyplot as plt
 from training import train_loop, eval_loop
 from torch.optim import lr_scheduler
-from utils import heatmap, heatmap3D, UncertaintySampling, dataSampling, removeOutBound
+from utils import heatmap, heatmap3D, UncertaintySampling, dataSampling, removeOutBound, plot_true_bound
 
 # Ignore the warning information
 warnings.filterwarnings('always')
@@ -80,12 +80,12 @@ def main(verbose=False, method=0, pretrained=False):
     sample_method = sampler.least_confidence
     
     # Specify the dataset
-    X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
-    y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
-    sample_upper_bound = "dataset/flexibility/2d/2d_upper_2.csv"
-    sample_lower_bound = "dataset/flexibility/2d/2d_lower_2.csv"
-    theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_2.csv"
-    theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_2.csv"
+    X_csv = "dataset/flexibility/2d/2d_ratio_1.csv"
+    y_csv = "dataset/flexibility/2d/2d_isfeas_1.csv"
+    sample_upper_bound = "dataset/flexibility/2d/2d_upper_1.csv"
+    sample_lower_bound = "dataset/flexibility/2d/2d_lower_1.csv"
+    theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_1.csv"
+    theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_1.csv"
     
     df_x = pd.read_csv(X_csv, header=None)
     df_y = pd.read_csv(y_csv, header=None)
@@ -161,13 +161,7 @@ def main(verbose=False, method=0, pretrained=False):
     upper_bound = (upper_bound - train_mean) / train_std
     lower_bound = (lower_bound - train_mean) / train_std
     
-    # hardcode (by sampling the position of the truth label from the plot figure) the truth boundary of the second case for visualization:
-    true_x1_1, true_x2_1 = -1.265, 0.688
-    true_x1_2, true_x2_2 = -0.012, 0.688
-    true_x1_3, true_x2_3 = 0.342, 0.355
-    true_x1_4, true_x2_4 = 0.342, -1.059
-    true_x1_5, true_x2_5 = -0.781, -1.059
-    true_x1_6, true_x2_6 = -1.265, -0.561
+
     
     # theoretical_bound
     tb = None
@@ -180,31 +174,27 @@ def main(verbose=False, method=0, pretrained=False):
         }
 
     # Plot the figure of normalized data distribution
+    plt.figure(figsize=(19, 16))
+    plt.title('Raw data distribution (normalized)', fontsize=30)
+    plt.scatter(X_all[:,0], X_all[:,1],c=y)
+    plt.xlabel("feature 1", fontsize=18)
+    plt.ylabel("feature 2", fontsize=18)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    
+    # plot the theoretical boundary
+    plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
+    plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
+    plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+    plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+    
+    plot_true_bound()
+    
+    plt.savefig(fig_path + "raw_distribution_normalized")
     if verbose:
-        plt.figure(figsize=(19, 16))
-        plt.title('Raw data distribution (normalized)', fontsize=30)
-        plt.scatter(X_all[:,0], X_all[:,1],c=y)
-        plt.xlabel("feature 1", fontsize=18)
-        plt.ylabel("feature 2", fontsize=18)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-        
-        # plot the theoretical boundary
-        plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
-        plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
-        plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
-        plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
-        
-        # plot true boundary
-        plt.plot([true_x1_1, true_x1_2], [true_x2_1, true_x2_2], c='g', linewidth=5)
-        plt.plot([true_x1_2, true_x1_3], [true_x2_2, true_x2_3], c='g', linewidth=5)
-        plt.plot([true_x1_3, true_x1_4], [true_x2_3, true_x2_4], c='g', linewidth=5)
-        plt.plot([true_x1_4, true_x1_5], [true_x2_4, true_x2_5], c='g', linewidth=5)
-        plt.plot([true_x1_5, true_x1_6], [true_x2_5, true_x2_6], c='g', linewidth=5)
-        plt.plot([true_x1_6, true_x1_1], [true_x2_6, true_x2_1], c='g', linewidth=5)
-        
-        plt.savefig(fig_path + "raw_distribution_normalized")
         plt.show()
+    else:
+        plt.close()
 
 
     # Current data pool for sampling
@@ -231,7 +221,7 @@ def main(verbose=False, method=0, pretrained=False):
     model.to(device)
 
     # hyper parameters
-    epochs = 20
+    epochs = 200
     Lr = 0.001
     
     # Parameter for SGD optimizer
@@ -263,8 +253,8 @@ def main(verbose=False, method=0, pretrained=False):
             cnt += 1
         
         params = filter(lambda p: p.requires_grad, model.parameters())
-        # optimizer = torch.optim.SGD(params, lr=Lr, momentum=optimizer_momentum)
-        optimizer = torch.optim.Adam(params, lr=Lr)
+        optimizer = torch.optim.SGD(params, lr=Lr, momentum=optimizer_momentum)
+        # optimizer = torch.optim.Adam(params, lr=Lr)
 
     scheduler = lr_scheduler(optimizer, lr_lambda=lr_lambda)
     
@@ -360,7 +350,7 @@ def main(verbose=False, method=0, pretrained=False):
 
         # in this case, print heatmap every 100 iterations
         if (t+1) % 5 == 0:
-            heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, path=fig_path, lb=lower_bound, ub=upper_bound ,tb=tb, verbose=verbose)
+            heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, path=fig_path, lb=lower_bound, ub=upper_bound ,tb=tb, pretrained=pretrained, verbose=verbose)
         if pretrained:
             suffix = "_transfer"
         else:
@@ -404,4 +394,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=False, method=2, pretrained=False)
+    main(verbose=False, method=2, pretrained=True)

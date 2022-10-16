@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-14 13:54:48
+LastEditTime: 2022-10-16 15:33:33
 Description: 
 '''
 import pandas as pd
@@ -227,6 +227,27 @@ def removeOutBound(tb, data):
     )[0], axis=0)
     
     return data
+
+def removeOutBound_4d(tb, data):
+    """
+    Remove the data that are able to be determined by theritical bound
+    """
+    # data = np.delete(data, np.where(
+    #     (data[:,0] >= tb["x1_hi_out"]) |
+    #     (data[:,0] <= tb["x1_lo_out"]) |
+    #     (data[:,1] >= tb["x2_hi_out"]) |
+    #     (data[:,1] <= tb["x2_lo_out"]) |
+    #     ((data[:,0] <= tb["x1_hi_in"]) & (data[:,0] >= tb["x1_lo_in"]) & (data[:,1] <= tb["x2_hi_in"]) & (data[:,1] >= tb["x2_lo_in"]))
+    # )[0], axis=0)
+    data = np.delete(data, np.where(
+        ((data[:,0] <= tb["x1_hi"]) & (data[:,0] >= tb["x1_lo"]) & 
+         (data[:,1] <= tb["x2_hi"]) & (data[:,1] >= tb["x2_lo"]) &
+         (data[:,2] <= tb["x3_hi"]) & (data[:,2] >= tb["x3_lo"]) &
+         (data[:,3] <= tb["x4_hi"]) & (data[:,3] >= tb["x4_lo"]))
+    )[0], axis=0)
+    
+    return data
+
 
 def isInBound(tb, data) -> bool:
     """

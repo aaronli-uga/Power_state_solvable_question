@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-13 23:30:51
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-16 15:33:33
+LastEditTime: 2022-10-29 15:56:02
 Description: 
 '''
 import pandas as pd
@@ -114,10 +114,18 @@ def heatmap(model, dataset, sampled_data, device, uncertainty_methods, epoch, me
     
     feature_1 = dataset[:,0]
     feature_2 = dataset[:,1]
+    
+    uncertainty_threshold = 0.9
+    # Return the index of samples whose uncertainty value is bigger than the mark_size_threshold
+    index = np.where(preds > uncertainty_threshold)[0]
     # draw the heatmap 
     plt.figure(figsize=(19,16))
     plt.title(f"uncertainty heatmap (Epoch: {epoch})", fontsize=30)
-    plt.scatter(feature_1, feature_2, c=preds, cmap="coolwarm", vmax=1, vmin=0)
+    
+    # scatter with different marker size
+    plt.scatter(feature_1, feature_2, c=preds, cmap="coolwarm", vmax=1, vmin=0, s=10)
+    plt.scatter(feature_1[index], feature_2[index], c=preds[index], cmap="coolwarm", vmax=1, vmin=0, s=80)
+    
     plt.xlabel("feature 1", fontsize=16)
     plt.ylabel("feature 2", fontsize=16)
     plt.xticks(fontsize=16)

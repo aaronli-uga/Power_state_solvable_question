@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2022-10-16 16:40:46
+LastEditTime: 2022-11-04 09:35:22
 Description: 
 '''
 #%%
@@ -73,7 +73,7 @@ def main(verbose=False, method=0, pretrained=False):
     sample_method = sampler.least_confidence
     
     # The following specify the dataset
-    timestamp = '7'
+    timestamp = '1'
     
     X_csv = f"dataset/flexibility/4d/4d_ratio_{timestamp}.csv"
     y_csv = f"dataset/flexibility/4d/4d_isfeas_{timestamp}.csv"
@@ -194,7 +194,7 @@ def main(verbose=False, method=0, pretrained=False):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = FNN(n_inputs=num_features)
+    model = FNN_4d(n_inputs=num_features)
 
     # load the transfered model
     if pretrained:
@@ -202,7 +202,7 @@ def main(verbose=False, method=0, pretrained=False):
     model.to(device)
 
     # hyper parameters
-    epochs = 200
+    epochs = 250
     Lr = 0.001
     optimizer_momentum = 0.9
     if pretrained:
@@ -314,7 +314,7 @@ def main(verbose=False, method=0, pretrained=False):
     print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
     # save history file
-    np.save(model_path + f"4d_{timestamp}_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
+    np.save(model_path + f"new_4d_{timestamp}_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
         #%%
@@ -345,4 +345,4 @@ def main(verbose=False, method=0, pretrained=False):
     # %%
 
 if __name__ == '__main__':
-    main(verbose=False, method=2, pretrained=True)
+    main(verbose=False, method=1, pretrained=False)

@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2023-05-07 23:58:48
+LastEditTime: 2023-05-16 00:19:18
 Description: 
 '''
 #%%
@@ -149,11 +149,16 @@ def main(verbose=False, method=0, pretrained=False):
 
     train_mean = X_train.mean(axis=0)
     train_std = X_train.std(axis=0)
+    
+    np.save("train_mean.npy", train_mean)
+    np.save("train_std", train_std)
+    print(f"train mean: {train_mean}. train_std: {train_std}")
 
     # Feature data normalization
     X_all = (X - train_mean) / train_std
     X_train = (X_train - train_mean) / train_std
     X_test = (X_test - train_mean) / train_std
+    
     
     # Theoritical bound normalization
     upper_bound = [x1_tu, x2_tu]
@@ -363,7 +368,7 @@ def main(verbose=False, method=0, pretrained=False):
     print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
     # save history file
-    np.save(model_path + f"2d_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
+    np.save(model_path + f"noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
         #%%

@@ -4,5 +4,7 @@
 *.DS_Store
 *.pkl
 *.npy
+*.csv
+*.mat
 Summary/
 Confusion_Matrix/

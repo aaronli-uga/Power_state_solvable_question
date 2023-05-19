@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2023-05-18 23:11:09
+LastEditTime: 2023-05-18 23:17:02
 Description: 
 '''
 #%%
@@ -80,55 +80,55 @@ def main(verbose=False, method=0, pretrained=False):
     sample_method = sampler.least_confidence
     
     # Specify the dataset
-    X_csv = "dataset/flexibility/2d/2d_ratio_2.csv"
-    y_csv = "dataset/flexibility/2d/2d_isfeas_2.csv"
-    sample_upper_bound = "dataset/flexibility/2d/2d_upper_2.csv"
-    sample_lower_bound = "dataset/flexibility/2d/2d_lower_2.csv"
-    theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_2.csv"
-    theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_2.csv"
+    X_csv = "dataset/noise/X_pv_training.csv"
+    y_csv = "dataset/noise/y_training.csv"
+    # sample_upper_bound = "dataset/flexibility/2d/2d_upper_2.csv"
+    # sample_lower_bound = "dataset/flexibility/2d/2d_lower_2.csv"
+    # theory_upper_bound = "dataset/flexibility/2d/2d_theory_upper_2.csv"
+    # theory_lower_bound = "dataset/flexibility/2d/2d_theory_lower_2.csv"
     
     df_x = pd.read_csv(X_csv, header=None)
     df_y = pd.read_csv(y_csv, header=None)
-    upper = pd.read_csv(sample_upper_bound, header=None)
-    lower = pd.read_csv(sample_lower_bound, header=None)
-    theory_upper = pd.read_csv(theory_upper_bound, header=None)
-    theory_lower = pd.read_csv(theory_lower_bound, header=None)
+    # upper = pd.read_csv(sample_upper_bound, header=None)
+    # lower = pd.read_csv(sample_lower_bound, header=None)
+    # theory_upper = pd.read_csv(theory_upper_bound, header=None)
+    # theory_lower = pd.read_csv(theory_lower_bound, header=None)
     
-    X1_u = upper[0][0]
-    X2_u = upper[0][1]
+    # X1_u = upper[0][0]
+    # X2_u = upper[0][1]
     
-    x1_tu = theory_upper[0][0]
-    x2_tu = theory_upper[0][1]
+    # x1_tu = theory_upper[0][0]
+    # x2_tu = theory_upper[0][1]
     
-    X1_l = lower[0][0]
-    X2_l = lower[0][1]
+    # X1_l = lower[0][0]
+    # X2_l = lower[0][1]
     
-    x1_tl = theory_lower[0][0]
-    x2_tl = theory_lower[0][1]
+    # x1_tl = theory_lower[0][0]
+    # x2_tl = theory_lower[0][1]
     
     X = df_x.to_numpy()
     y = df_y.to_numpy()
     
     # The formula to retrieve the actual value from the ratio:
     # value = r * u + (1 - r) * ell
-    X[:,0] = X[:,0] * X1_u + (1 - X[:,0]) * X1_l
-    X[:,1] = X[:,1] * X2_u + (1 - X[:,1]) * X2_l
+    # X[:,0] = X[:,0] * X1_u + (1 - X[:,0]) * X1_l
+    # X[:,1] = X[:,1] * X2_u + (1 - X[:,1]) * X2_l
     
     
     # Plot the figure of raw data distribution
-    if verbose:
-        plt.figure(figsize=(19, 16))
-        plt.title('Raw data distribution')
-        plt.scatter(X[:,0], X[:,1], c=y)
+    # if verbose:
+    #     plt.figure(figsize=(19, 16))
+    #     plt.title('Raw data distribution')
+    #     plt.scatter(X[:,0], X[:,1], c=y)
         
-        # plot theoretical bound
-        plt.plot()
-        plt.plot([x1_tl, x1_tu], [x2_tl, x2_tl], c='r', linewidth=5)
-        plt.plot([x1_tl, x1_tu], [x2_tu, x2_tu], c='r', linewidth=5)
-        plt.plot([x1_tl, x1_tl], [x2_tl, x2_tu], c='r', linewidth=5)
-        plt.plot([x1_tu, x1_tu], [x2_tl, x2_tu], c='r', linewidth=5)
-        plt.savefig(fig_path + "raw_distribution")
-        plt.show()
+    #     # plot theoretical bound
+    #     plt.plot()
+    #     plt.plot([x1_tl, x1_tu], [x2_tl, x2_tl], c='r', linewidth=5)
+    #     plt.plot([x1_tl, x1_tu], [x2_tu, x2_tu], c='r', linewidth=5)
+    #     plt.plot([x1_tl, x1_tl], [x2_tl, x2_tu], c='r', linewidth=5)
+    #     plt.plot([x1_tu, x1_tu], [x2_tl, x2_tu], c='r', linewidth=5)
+    #     plt.savefig(fig_path + "raw_distribution")
+    #     plt.show()
 
     #Preprocessing
     
@@ -161,22 +161,22 @@ def main(verbose=False, method=0, pretrained=False):
     
     
     # Theoritical bound normalization
-    upper_bound = [x1_tu, x2_tu]
-    lower_bound = [x1_tl, x2_tl]
-    upper_bound = (upper_bound - train_mean) / train_std
-    lower_bound = (lower_bound - train_mean) / train_std
+    # upper_bound = [x1_tu, x2_tu]
+    # lower_bound = [x1_tl, x2_tl]
+    # upper_bound = (upper_bound - train_mean) / train_std
+    # lower_bound = (lower_bound - train_mean) / train_std
     
 
     
     # theoretical_bound
-    tb = None
-    if method == 2:
-        tb = {
-            "x1_hi": upper_bound[0],
-            "x1_lo": lower_bound[0],
-            "x2_hi": upper_bound[1],
-            "x2_lo": lower_bound[1]
-        }
+    # tb = None
+    # if method == 2:
+    #     tb = {
+    #         "x1_hi": upper_bound[0],
+    #         "x1_lo": lower_bound[0],
+    #         "x2_hi": upper_bound[1],
+    #         "x2_lo": lower_bound[1]
+    #     }
 
     # Plot the figure of normalized data distribution
     plt.figure(figsize=(19, 16))
@@ -187,11 +187,11 @@ def main(verbose=False, method=0, pretrained=False):
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     
-    # plot the theoretical boundary
-    plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
-    plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
-    plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
-    plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+    # # plot the theoretical boundary
+    # plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
+    # plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
+    # plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+    # plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
     
     plot_true_bound()
     
@@ -284,10 +284,10 @@ def main(verbose=False, method=0, pretrained=False):
                     plt.scatter(X_all[:,0], X_all[:,1], c=y)
                     plt.scatter(sampled_data_pool[:,0], sampled_data_pool[:,1], c='r', marker='v', label="sample data pool")
                     # plot the theoretical boundary
-                    plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
-                    plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
-                    plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
-                    plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+                    # plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
+                    # plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
+                    # plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+                    # plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
                     plt.legend()
                     plt.show()
             if method == 2:
@@ -299,10 +299,10 @@ def main(verbose=False, method=0, pretrained=False):
                     plt.scatter(X_all[:,0], X_all[:,1], c=y)
                     plt.scatter(train_data_pool[:,0], train_data_pool[:,1], c='r', marker='v', label="training data pool")
                     # plot the theoretical boundary
-                    plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
-                    plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
-                    plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
-                    plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+                    # plt.plot([lower_bound[0], upper_bound[0]], [lower_bound[1], lower_bound[1]], c='r', linewidth=5)
+                    # plt.plot([lower_bound[0], upper_bound[0]], [upper_bound[1], upper_bound[1]], c='r', linewidth=5)
+                    # plt.plot([lower_bound[0], lower_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
+                    # plt.plot([upper_bound[0], upper_bound[0]], [lower_bound[1], upper_bound[1]], c='r', linewidth=5)
                     plt.legend()
                     plt.show()
         else:
@@ -354,21 +354,21 @@ def main(verbose=False, method=0, pretrained=False):
         )
 
         # in this case, print heatmap every 100 iterations
-        if (t+1) % 5 == 0:
-            heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, path=fig_path, lb=lower_bound, ub=upper_bound ,tb=tb, pretrained=pretrained, verbose=verbose)
+        # if (t+1) % 5 == 0:
+            # heatmap(model=model, dataset=X_all, sampled_data=cur_training_data, device=device, uncertainty_methods=sample_method, epoch=t+1, method=method, path=fig_path, lb=lower_bound, ub=upper_bound ,tb=tb, pretrained=pretrained, verbose=verbose)
         if pretrained:
             suffix = "_transfer"
         else:
             suffix = ""
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
-            torch.save(model.state_dict(), model_path + f"2d_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
+            torch.save(model.state_dict(), model_path + f"new_noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
 
     time_delta = time.time() - start
     print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
     # save history file
-    np.save(model_path + f"noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
+    np.save(model_path + f"new_noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
         #%%

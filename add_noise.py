@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2023-05-08 00:11:16
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2023-05-11 12:26:33
+LastEditTime: 2023-05-19 22:15:15
 Description: 
 '''
 import torch 
@@ -15,6 +15,9 @@ from sklearn.metrics import accuracy_score
 from matplotlib import pyplot as plt
 import matplotlib as mpl
 
+def addlabels(x,y):
+    for i in range(len(x)):
+        plt.text(i, y[i], y[i], ha = 'center')
 
 X_test = np.load("X_test.npy")
 y_test = np.load("Y_test.npy")
@@ -61,13 +64,18 @@ for noise_level in noise_levels:
 print(history['f1_test'])
 print(history['acc_test'])
 
+for i in range(len(history['acc_test'])):
+    history['acc_test'][i] = round(history['acc_test'][i], 3)
+
 objects = ('zero noise', '5%', '10%', '20%', '30%', '40%', '50%')
 y_pos = np.arange(len(objects))
 
 plt.bar(y_pos, history['acc_test'], align='center', alpha=0.5)
+addlabels(y_pos, history['acc_test'])
 plt.xticks(y_pos, objects)
 plt.ylabel('Test Accuracy')
-plt.title('Gaussion noise level in percentage')
+plt.xlabel('Noise levels in percentage')
+plt.title('Accuracy in different levels of Gaussion noise')
 
 plt.show()
 

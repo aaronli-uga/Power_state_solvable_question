@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2023-05-08 00:11:16
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2023-05-19 22:15:15
+LastEditTime: 2023-05-22 14:22:47
 Description: 
 '''
 import torch 
@@ -22,7 +22,7 @@ def addlabels(x,y):
 X_test = np.load("X_test.npy")
 y_test = np.load("Y_test.npy")
 # Adding noise
-noise_levels = [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
+noise_levels = [0.03, 0.1, 0.2, 0.3, 0.4]
 history = dict(train_loss=[], test_loss=[], acc_train=[], acc_test=[], f1_train=[], f1_test=[])
 
 for noise_level in noise_levels:
@@ -67,7 +67,7 @@ print(history['acc_test'])
 for i in range(len(history['acc_test'])):
     history['acc_test'][i] = round(history['acc_test'][i], 3)
 
-objects = ('zero noise', '5%', '10%', '20%', '30%', '40%', '50%')
+objects = ('3%', '10%', '20%', '30%', '40%')
 y_pos = np.arange(len(objects))
 
 plt.bar(y_pos, history['acc_test'], align='center', alpha=0.5)

@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2022-07-19 00:26:02
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2023-05-18 23:17:02
+LastEditTime: 2023-05-29 14:54:27
 Description: 
 '''
 #%%
@@ -150,9 +150,9 @@ def main(verbose=False, method=0, pretrained=False):
     train_mean = X_train.mean(axis=0)
     train_std = X_train.std(axis=0)
     
-    np.save("new_train_mean.npy", train_mean)
-    np.save("new_train_std.npy", train_std)
-    print(f"train mean: {train_mean}. train_std: {train_std}")
+    # np.save("new_train_mean.npy", train_mean)
+    # np.save("new_train_std.npy", train_std)
+    # print(f"train mean: {train_mean}. train_std: {train_std}")
 
     # Feature data normalization
     X_all = (X - train_mean) / train_std
@@ -226,7 +226,7 @@ def main(verbose=False, method=0, pretrained=False):
     model.to(device)
 
     # hyper parameters
-    epochs = 120
+    epochs = 50
     Lr = 0.001
     
     # Parameter for SGD optimizer
@@ -362,13 +362,13 @@ def main(verbose=False, method=0, pretrained=False):
             suffix = ""
         if max_loss > history['test_loss'][-1]:
             max_loss = history['test_loss'][-1]
-            torch.save(model.state_dict(), model_path + f"new_noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
+            torch.save(model.state_dict(), model_path + f"proposed_noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_bestmodel{suffix}.pth")
 
     time_delta = time.time() - start
     print('Training complete in {:.0f}m {:.0f}s'.format(time_delta // 60, time_delta % 60))
 
     # save history file
-    np.save(model_path + f"new_noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
+    np.save(model_path + f"proposed_noise_2d_epochs{epochs}_lr_{Lr}_bs_{bs}_history{suffix}.npy", history)
 
     if verbose:
         #%%

@@ -2,7 +2,7 @@
 Author: Qi7
 Date: 2023-05-16 00:02:31
 LastEditors: aaronli-uga ql61608@uga.edu
-LastEditTime: 2023-05-20 22:49:53
+LastEditTime: 2023-05-29 15:16:01
 Description: test the disturbance in DER.
 '''
 import torch 
@@ -16,9 +16,9 @@ from matplotlib import pyplot as plt
 import matplotlib as mpl
 import pandas as pd
 
-def addlabels(x,y):
+def addlabels(x,y, margin):
     for i in range(len(x)):
-        plt.text(i, y[i], y[i], ha = 'center')
+        plt.text(i + margin, y[i], y[i])
         
 data_path = "dataset/noise/"
 files = [("X_3p_0519.csv", "isfeas_3p_0519.csv"),
@@ -50,7 +50,8 @@ for (X_csv, y_csv) in files:
     y_test = y
 
     history = dict(train_loss=[], test_loss=[], acc_train=[], acc_test=[], f1_train=[], f1_test=[])
-    trained_model = "savedModel/active_learning/new_noise_2d_epochs120_lr_0.001_bs_16_bestmodel.pth"
+    # trained_model = "savedModel/active_learning/proposed_noise_2d_epochs50_lr_0.001_bs_16_bestmodel.pth"
+    trained_model = "savedModel/random_sample/benchmark_noise_2d_epochs50_lr_0.001_bs_16_bestmodel.pth"
     num_features = X_test.shape[1]
 
     test_data_pool = np.append(X_test, y_test, 1)
@@ -96,15 +97,23 @@ print(f"Accuracy: {accuracy_all}")
 # plt.title('Noise level in percentage')
 
 # plt.show()
+f1_all_benchmark = [0.983, 0.968, 0.938, 0.922, 0.884]
 
 objects = ('3%', '10%', '20%', '30%', '40%')
 y_pos = np.arange(len(objects))
 
-plt.bar(y_pos, f1_all, align='center', alpha=0.5)
-addlabels(y_pos, f1_all)
+# plt.bar(y_pos, f1_all, align='center', alpha=0.5, label='proposed')
+plt.bar(y_pos + 0.2, f1_all_benchmark, 0.4, label='proposed')
+plt.bar(y_pos - 0.2, f1_all, 0.4, label='benchmark')
+# plt.bar(y_pos + 0.2, f1_all_benchmark, 0.4, label='benchmark')
+addlabels(y_pos, f1_all, margin=-0.3)
+addlabels(y_pos, f1_all_benchmark, margin=0.1)
 plt.xticks(y_pos, objects)
-plt.xlabel('Noise levels in percentage')
+plt.xlabel('Uncertainty levels in percentage')
 plt.ylabel('Test F1 score')
-plt.title('F1 score in different levels of noise')
+plt.ylim((0.8, 1))
+plt.title('F1 score in different levels of uncertainty (proposed method vs benchmark)')
+# plt.title('F1 score in different levels of noise')
+plt.legend()
 
 plt.show()
